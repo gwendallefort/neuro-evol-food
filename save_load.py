@@ -5,6 +5,7 @@ from entities import Creature, Food
 from brain import NeuralNetwork
 from stats import Statistics
 from settings import *
+import os
 
 
 def serialize_neural_network(brain):
@@ -92,6 +93,16 @@ def deserialize_statistics(data):
     stats.survival_rate = data['survival_rate']
     return stats
 
+def save_auto(save_folder, creatures, foods, stats, generation, gen_timer):
+    """
+    Auto-save at end of generation
+    """
+    try:
+        # Generate filename for this generation
+        save_filename = os.path.join(save_folder, f"generation_{generation:04d}.json")
+        save_simulation_state(save_filename, creatures, foods, stats, generation, gen_timer)
+    except Exception as e:
+        print(f"Auto-save failed for generation {generation}: {e}")
 
 def save_simulation_state(filename, creatures, foods, stats, generation, gen_timer, selected_creature_index=None):
     """

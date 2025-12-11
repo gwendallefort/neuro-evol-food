@@ -9,7 +9,7 @@ from entities import Creature, Food
 from genetics import create_new_generation
 from stats import Statistics
 from ui import SpeedController, ScrollablePanel, draw_ui_panel, draw_status_indicators
-from save_load import save_simulation_state, load_simulation_state
+from save_load import save_simulation_state, load_simulation_state, save_auto
 
 def simulation_step(creatures, foods, dt, speed_multiplier=1):
     """Run one simulation step"""
@@ -27,6 +27,12 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.Font(None, 24)
     small_font = pygame.font.Font(None, 20)
+
+    # Create a folder in the saves directory
+    saves_dir = "saves"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_folder = os.path.join(saves_dir, f"session_{timestamp}")
+    os.makedirs(save_folder, exist_ok=True)
 
     # Initialize
     creatures = [
@@ -217,6 +223,9 @@ def main():
                     # Check generation end
                     if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
                         stats.record_generation(generation, creatures, gen_timer)
+                        
+                        save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
+                        
                         creatures = create_new_generation(creatures)
                         foods = [Food() for _ in range(FOOD_COUNT)]
                         generation += 1
@@ -234,6 +243,9 @@ def main():
                 # Check generation end
                 if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
                     stats.record_generation(generation, creatures, gen_timer)
+
+                    save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
+
                     creatures = create_new_generation(creatures)
                     foods = [Food() for _ in range(FOOD_COUNT)]
                     generation += 1
