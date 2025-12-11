@@ -262,6 +262,8 @@ def draw_controls_help(screen, font, x_offset=0, y_start=0):
         "UP/DOWN or +/- - Speed",
         "1-6 - Preset Speeds",
         "T - Toggle Turbo",
+        "S - Save Simulation",
+        "L - Load Simulation",
         "Mouse Wheel - Scroll Panel"
     ]
     
@@ -274,7 +276,52 @@ def draw_controls_help(screen, font, x_offset=0, y_start=0):
     return y
 
 
-def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface):
+def draw_brain_visualization(screen, font, selected_creature, foods, creatures, x_offset=0, y_start=0):
+    """Draw neural network visualization for selected creature"""
+    if selected_creature is None or not selected_creature.alive:
+        return y_start
+    
+    # Title
+    title = font.render("Neural Network", True, BLACK)
+    screen.blit(title, (10 + x_offset, y_start))
+    y_pos = y_start + 28
+    
+    # Get current inputs
+    inputs = selected_creature.sense(foods, creatures)
+    
+    # Create surface for brain visualization
+    brain_width = GRAPH_PANEL_WIDTH - 20
+    brain_height = 250
+    brain_surface = pygame.Surface((brain_width, brain_height))
+    brain_surface.fill(WHITE)
+    
+    # Visualize the network
+    selected_creature.brain.visualize(brain_surface, 10, 10, brain_width - 20, brain_height - 20, inputs)
+    
+    # Blit to screen
+    screen.blit(brain_surface, (10 + x_offset, y_pos))
+    y_pos += brain_height + 10
+    
+    # Show creature stats
+    from genetics import calculate_fitness
+    fitness = calculate_fitness(selected_creature)
+    stats_text = [
+        f"Fitness: {fitness:.0f}",
+        f"Food Eaten: {selected_creature.food_eaten}",
+        f"Energy: {selected_creature.energy:.0f}",
+        f"Time Alive: {selected_creature.time_alive:.1f}s"
+    ]
+    
+    small_font = pygame.font.Font(None, 18)
+    for text in stats_text:
+        surface = small_font.render(text, True, DARK_GRAY)
+        screen.blit(surface, (10 + x_offset, y_pos))
+        y_pos += 20
+    
+    return y_pos + 10
+
+
+def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface, selected_creature=None, foods=None):
     """Draw the entire UI panel with scrolling"""
     # Draw panel background
     draw_panel_background(screen)
@@ -285,6 +332,11 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     content_height += 10  # Spacing
     content_height += 260  # Stats section (approx 9 lines * 28 + gaps)
     content_height += 100  # Speed control section
+    
+    # Add brain visualization height if creature selected
+    if selected_creature and selected_creature.alive:
+        content_height += 350  # Brain visualization + stats
+    
     content_height += 400  # Graph section
     content_height += 160  # Controls help section
     content_height += 20   # Bottom padding
@@ -306,6 +358,13 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     
     # Draw speed control
     y_pos = draw_speed_indicator(content_surface, font, speed_controller, x_offset=0, y_offset=y_pos - 180)
+    
+    # Add spacing
+    y_pos += 20
+    
+    # Draw brain visualization if creature selected
+    if selected_creature and foods is not None:
+        y_pos = draw_brain_visualization(content_surface, font, selected_creature, foods, creatures, x_offset=0, y_start=y_pos)
     
     # Add spacing before graphs
     y_pos += 20

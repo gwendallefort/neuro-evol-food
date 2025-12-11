@@ -91,12 +91,17 @@ class Creature:
                           for dist in sector_creature_dist]
         
         # Wall distance (distance to nearest wall)
-        wall_dist = min(self.x, self.y, 
-                       SIM_WIDTH - self.x, 
-                       WINDOW_HEIGHT - self.y) / 100
+        wall_dist = np.tanh(
+            min(
+                self.x, 
+                self.y, 
+                SIM_WIDTH - self.x, 
+                WINDOW_HEIGHT - self.y
+            ) / 100
+        )
         
         # Energy level
-        energy_input = self.energy / 100
+        energy_input = np.tanh(self.energy / 100)
         
         # Return: [food_sector_0, ..., food_sector_N-1, creature_sector_0, ..., creature_sector_N-1, wall_dist, energy]
         return food_inputs + creature_inputs + [wall_dist, energy_input]
