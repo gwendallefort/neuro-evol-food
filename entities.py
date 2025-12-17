@@ -117,18 +117,19 @@ class Creature:
 
         inputs = self.sense(foods, creatures)
         outputs = self.think(inputs)
+        outputs = outputs * speed_multiplier
 
         self.angle += outputs[0] * 0.2
         self.speed = (outputs[1] + 1) * 1.5 + 0.5
 
-        self.x += np.cos(self.angle) * self.speed * speed_multiplier
-        self.y += np.sin(self.angle) * self.speed * speed_multiplier
+        self.x += np.cos(self.angle) * self.speed 
+        self.y += np.sin(self.angle) * self.speed
 
         # Keep within simulation bounds
         self.x = max(10, min(SIM_WIDTH - 10, self.x))
         self.y = max(10, min(WINDOW_HEIGHT - 10, self.y))
 
-        self.energy -= (0.1 + self.speed * 0.05) * speed_multiplier
+        self.energy -= (0.1 + self.speed * 0.05)
 
         if self.energy <= 0:
             self.alive = False

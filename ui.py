@@ -223,8 +223,11 @@ def draw_fps(screen, font, fps, x_offset=0, y_start=0):
 
 def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, x_offset=0, y_start=20):
     alive_count = sum(1 for c in creatures if c.alive)
-    current_best = max(calculate_fitness(c) for c in creatures)
-    current_avg = np.mean([calculate_fitness(c) for c in creatures])
+
+    fitnesses = [calculate_fitness(c) for c in creatures]
+    current_best = max(fitnesses)
+    current_avg = np.mean(fitnesses)
+
     total_food = sum(c.food_eaten for c in creatures)
     
     best_ever = max(stats.best_fitness) if stats.best_fitness else current_best
@@ -291,7 +294,7 @@ def draw_brain_visualization(screen, font, selected_creature, foods, creatures, 
     
     # Create surface for brain visualization
     brain_width = GRAPH_PANEL_WIDTH - 20
-    brain_height = 250
+    brain_height = BRAIN_LAYERS[0] * 30
     brain_surface = pygame.Surface((brain_width, brain_height))
     brain_surface.fill(WHITE)
     
@@ -326,23 +329,6 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     # Draw panel background
     draw_panel_background(screen)
     
-    # Calculate content height
-    content_height = 10  # Initial padding
-    content_height += 28  # FPS display
-    content_height += 10  # Spacing
-    content_height += 260  # Stats section (approx 9 lines * 28 + gaps)
-    content_height += 100  # Speed control section
-    
-    # Add brain visualization height if creature selected
-    if selected_creature and selected_creature.alive:
-        content_height += 350  # Brain visualization + stats
-    
-    content_height += 400  # Graph section
-    content_height += 160  # Controls help section
-    content_height += 20   # Bottom padding
-    
-    scrollable_panel.set_content_height(content_height)
-    
     # Begin drawing on scrollable content
     content_surface = scrollable_panel.begin_draw(screen)
     
@@ -359,13 +345,6 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     # Draw speed control
     y_pos = draw_speed_indicator(content_surface, font, speed_controller, x_offset=0, y_offset=y_pos - 180)
     
-    # Add spacing
-    y_pos += 20
-    
-    # Draw brain visualization if creature selected
-    if selected_creature and foods is not None:
-        y_pos = draw_brain_visualization(content_surface, font, selected_creature, foods, creatures, x_offset=0, y_start=y_pos)
-    
     # Add spacing before graphs
     y_pos += 20
     
@@ -377,13 +356,23 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
         placeholder = small_font.render("Graphs appear after Gen 2", True, DARK_GRAY)
         content_surface.blit(placeholder, (20, y_pos + 100))
         y_pos += 200
+
+    # Add spacing
+    y_pos += 20
+    
+    # Draw brain visualization if creature selected
+    if selected_creature and foods is not None:
+        y_pos = draw_brain_visualization(content_surface, font, selected_creature, foods, creatures, x_offset=0, y_start=y_pos)
     
     # Add spacing before controls
     y_pos += 20
     
     # Controls help at the end
-    draw_controls_help(content_surface, small_font, x_offset=0, y_start=y_pos)
-    
+    y_pos = draw_controls_help(content_surface, small_font, x_offset=0, y_start=y_pos)
+
+    # Set content height    
+    scrollable_panel.set_content_height(y_pos + 20)
+
     # End drawing and apply scroll
     scrollable_panel.end_draw(screen, content_surface)
 

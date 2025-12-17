@@ -51,7 +51,7 @@ def main():
     generation = 1
     gen_timer = 0
     graph_surface = None
-    selected_creature = None  # Track selected creature
+    selected_creature = None
 
     running = True
     paused = False
@@ -209,6 +209,9 @@ def main():
                             status_message = f"Load failed: {str(e)}"
                             status_message_timer = 3.0
 
+                elif event.key == pygame.K_n:
+                    selected_creature = random.choice(creatures) if creatures else None
+
         # =========================
         # SIMULATION UPDATE
         # =========================
@@ -216,8 +219,12 @@ def main():
             if speed_controller.turbo_mode:
                 # Turbo: run many steps, skip rendering
                 for _ in range(TURBO_STEPS):
-                    sim_dt = 1/60
-                    gen_timer += sim_dt
+                    # sim_dt = (1/60) * speed_controller.current_speed
+                    # gen_timer += 1/60  # Use fixed timestep for gen_timer
+                    sim_dt = real_dt * speed_controller.current_speed
+                    # Use fixed timestep for gen_timer to prevent FPS-dependent generation length
+                    fixed_dt = (1/60) * speed_controller.current_speed
+                    gen_timer += fixed_dt
                     simulation_step(creatures, foods, sim_dt, speed_controller.current_speed)
                     
                     # Check generation end
@@ -231,7 +238,6 @@ def main():
                         generation += 1
                         gen_timer = 0
                         graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
-                        selected_creature = random.choice(creatures) if creatures else None  # Select random creature on new generation
             else:
                 # Normal speed
                 sim_dt = real_dt * speed_controller.current_speed
@@ -251,7 +257,6 @@ def main():
                     generation += 1
                     gen_timer = 0
                     graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
-                    selected_creature = random.choice(creatures) if creatures else None  # Select random creature on new generation
 
         # =========================
         # RENDERING
