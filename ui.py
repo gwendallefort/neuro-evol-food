@@ -352,7 +352,7 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     # Graphs
     if graph_surface:
         content_surface.blit(graph_surface, (5, y_pos))
-        y_pos += 390  # Height of graph surface
+        y_pos += GRAPH_PANEL_HEIGHT
     else:
         placeholder = small_font.render("Graphs appear after Gen 1", True, DARK_GRAY)
         content_surface.blit(placeholder, (20, y_pos + 100))

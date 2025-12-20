@@ -56,6 +56,9 @@ def create_new_generation(creatures):
             new_brain
         ))
 
+    if(len(parents) < 2):
+        return new_creatures
+
     alive_count = sum(1 for c in creatures if c.alive)
     while len(new_creatures) < alive_count * REPRODUCTION_RATE:
         p1, p2 = random.sample(parents, 2)

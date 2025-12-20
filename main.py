@@ -153,7 +153,7 @@ def main():
                             status_message_timer = 3.0  # Show for 3 seconds
                             # Regenerate graph surface after save
                             if len(stats.generations) >= 2:
-                                graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
+                                graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, GRAPH_PANEL_HEIGHT)
                         except Exception as e:
                             status_message = f"Save failed: {str(e)}"
                             status_message_timer = 3.0
@@ -194,7 +194,7 @@ def main():
                                 
                                 # Regenerate graph surface
                                 if len(stats.generations) >= 2:
-                                    graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
+                                    graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, GRAPH_PANEL_HEIGHT)
                                 else:
                                     graph_surface = None
                                 
@@ -241,7 +241,7 @@ def main():
                 generation += 1
                 gen_timer = 0
                 food_spawn_timer = 0  # Reset food spawn timer on new generation
-                graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
+                graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, GRAPH_PANEL_HEIGHT)
 
         # =========================
         # RENDERING
