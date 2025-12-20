@@ -20,7 +20,7 @@ SENSOR_RANGE = 200  # Maximum sensing range
 BRAIN_LAYERS = [
     NUM_SECTORS * 2 + 2, # 2 inputs per sector (food + creature) + wall + energy
     8,
-    2
+    3  # 3 outputs: angle change, speed, stun activation
 ]  
 
 # Speed Options
