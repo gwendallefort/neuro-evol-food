@@ -15,11 +15,6 @@ class Creature:
         self.food_eaten = 0
         self.alive = True
         self.time_alive = 0
-        
-        # Stun-related attributes
-        self.stun_timer = 0  # How long this creature is stunned (seconds)
-        self.stun_range = 50  # Range at which creature can stun others
-        self.target_creature = None  # Currently targeted creature for stun
 
         if brain is None:
             self.brain = NeuralNetwork(BRAIN_LAYERS)
@@ -119,71 +114,22 @@ class Creature:
             return
 
         self.time_alive += dt
-        
-        # Update stun timer (decrease over time)
-        if self.stun_timer > 0:
-            self.stun_timer = max(0, self.stun_timer - dt)
 
         inputs = self.sense(foods, creatures)
         outputs = self.think(inputs)
         outputs = outputs * speed_multiplier
 
-        # # Check if creature wants to stun
-        # if len(outputs) >= 3 and outputs[2] > 0.9 and self.stun_timer <= 0 and self.target_creature is None:
-        #     # Find the closest creature within field of view
-        #     closest_creature = None
-        #     closest_dist = float('inf')
-            
-        #     # Calculate field of view parameters
-        #     half_fov = FOV_ANGLE / 2
-            
-        #     for creature in creatures:
-        #         if creature is not self and creature.alive and creature.stun_timer <= 0:
-        #             dx = creature.x - self.x
-        #             dy = creature.y - self.y
-        #             dist = np.sqrt(dx * dx + dy * dy)
+        self.angle += outputs[0] * 0.2
+        self.speed = (outputs[1] + 1) * 1.5 + 0.5
 
-        #             # Check if within sensor range
-        #             if dist > SENSOR_RANGE:
-        #                 continue
-                    
-        #             # Calculate relative angle (normalized to [-pi, pi])
-        #             relative_angle = np.arctan2(dy, dx) - self.angle
-        #             relative_angle = np.arctan2(np.sin(relative_angle), np.cos(relative_angle))
-                    
-        #             # Check if within field of view and closer than previous closest
-        #             if abs(relative_angle) <= half_fov and dist < closest_dist:
-        #                 closest_creature = creature
-        #                 closest_dist = dist
-            
-        #     # Stun the closest creature if one was found
-        #     if closest_creature is not None:
-        #         # Store target for drawing
-        #         self.target_creature = closest_creature
-        #         # Stun the target creature
-        #         closest_creature.stun_timer = 2
-        #         # Consume some energy for using stun
-        #         self.energy -= 20
+        self.x += np.cos(self.angle) * self.speed 
+        self.y += np.sin(self.angle) * self.speed
 
-        # if self.target_creature is not None and self.target_creature.stun_timer <= 0:
-        #     self.target_creature = None
+        # Keep within simulation bounds
+        self.x = max(10, min(SIM_WIDTH - 10, self.x))
+        self.y = max(10, min(WINDOW_HEIGHT - 10, self.y))
 
-        # Only update movement if not stunned
-        if self.stun_timer <= 0:
-            self.angle += outputs[0] * 0.2
-            self.speed = (outputs[1] + 1) * 1.5 + 0.5
-
-            self.x += np.cos(self.angle) * self.speed 
-            self.y += np.sin(self.angle) * self.speed
-
-            # Keep within simulation bounds
-            self.x = max(10, min(SIM_WIDTH - 10, self.x))
-            self.y = max(10, min(WINDOW_HEIGHT - 10, self.y))
-
-            self.energy -= (0.1 + self.speed * 0.05)
-        else:
-            # Stunned creatures still lose energy but at a reduced rate
-            self.energy -= 0.05
+        self.energy -= (0.1 + self.speed * 0.05)
 
         if self.energy <= 0:
             self.alive = False
@@ -206,7 +152,7 @@ class Creature:
             return
         
         # Draw field of view (if enabled)
-        if show_fov and self.stun_timer <= 0 and self.alive:
+        if show_fov and self.alive:
             half_fov = FOV_ANGLE / 2
             left_angle = self.angle - half_fov
             right_angle = self.angle + half_fov
@@ -279,32 +225,12 @@ class Creature:
         energy_ratio = min(1, self.energy / 100)
         green = int(100 + 155 * energy_ratio)
         color = (50, green, 50)
-        
-        # If stunned, change color to purple/red
-        if self.stun_timer > 0:
-            color = (127, 50, 127)
-        
         pygame.draw.circle(screen, color, (int(self.x), int(self.y)), self.radius)
         
-        # Direction indicator (only if not stunned)
-        if self.stun_timer <= 0:
-            end_x = self.x + np.cos(self.angle) * self.radius * 1.5
-            end_y = self.y + np.sin(self.angle) * self.radius * 1.5
-            pygame.draw.line(screen, BLACK, (self.x, self.y), (end_x, end_y), 2)
-        else:
-            # Draw stun indicator (crossed lines or X pattern)
-            pygame.draw.line(screen, (255, 0, 255), 
-                           (int(self.x - self.radius), int(self.y - self.radius)),
-                           (int(self.x + self.radius), int(self.y + self.radius)), 2)
-            pygame.draw.line(screen, (255, 0, 255), 
-                           (int(self.x + self.radius), int(self.y - self.radius)),
-                           (int(self.x - self.radius), int(self.y + self.radius)), 2)
-        
-        # Draw line to target creature if one exists
-        if self.target_creature is not None and self.target_creature.alive:
-            pygame.draw.line(screen, (255, 0, 255), 
-                           (int(self.x), int(self.y)), 
-                           (int(self.target_creature.x), int(self.target_creature.y)), 2)
+        # Direction indicator
+        end_x = self.x + np.cos(self.angle) * self.radius * 1.5
+        end_y = self.y + np.sin(self.angle) * self.radius * 1.5
+        pygame.draw.line(screen, BLACK, (self.x, self.y), (end_x, end_y), 2)
         
         # Energy bar
         bar_width = 20
