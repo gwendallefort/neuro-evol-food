@@ -221,7 +221,7 @@ def draw_fps(screen, font, fps, x_offset=0, y_start=0):
     return y_start + 28
 
 
-def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, x_offset=0, y_start=20):
+def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=20):
     alive_count = sum(1 for c in creatures if c.alive)
 
     fitnesses = [calculate_fitness(c) for c in creatures]
@@ -237,7 +237,8 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed
         f"Time Left: {max(0, GENERATION_TIME - gen_timer):.1f}s",
         "",
         f"Alive: {alive_count}/{CREATURE_COUNT}",
-        f"Food Eaten: {total_food}",
+        f"Current Food : {len(foods)}/{MAX_FOOD}",
+        f"Total Food Eaten: {total_food}",
         "",
         f"Current Best: {current_best:.0f}",
         f"Current Avg: {current_avg:.0f}",
@@ -337,13 +338,13 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     y_pos = draw_fps(content_surface, font, current_fps, x_offset=0, y_start=10)
     
     # Draw stats below FPS
-    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, speed_controller, x_offset=0, y_start=y_pos + 10)
+    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=y_pos + 10)
     
     # Add some spacing
     y_pos += 10
     
     # Draw speed control
-    y_pos = draw_speed_indicator(content_surface, font, speed_controller, x_offset=0, y_offset=y_pos - 180)
+    # y_pos = draw_speed_indicator(content_surface, font, speed_controller, x_offset=0, y_offset=y_pos - 180)
     
     # Add spacing before graphs
     y_pos += 20

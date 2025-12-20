@@ -128,45 +128,45 @@ class Creature:
         outputs = self.think(inputs)
         outputs = outputs * speed_multiplier
 
-        # Check if creature wants to stun
-        if len(outputs) >= 3 and outputs[2] > 0.9 and self.stun_timer <= 0 and self.target_creature is None:
-            # Find the closest creature within field of view
-            closest_creature = None
-            closest_dist = float('inf')
+        # # Check if creature wants to stun
+        # if len(outputs) >= 3 and outputs[2] > 0.9 and self.stun_timer <= 0 and self.target_creature is None:
+        #     # Find the closest creature within field of view
+        #     closest_creature = None
+        #     closest_dist = float('inf')
             
-            # Calculate field of view parameters
-            half_fov = FOV_ANGLE / 2
+        #     # Calculate field of view parameters
+        #     half_fov = FOV_ANGLE / 2
             
-            for creature in creatures:
-                if creature is not self and creature.alive and creature.stun_timer <= 0:
-                    dx = creature.x - self.x
-                    dy = creature.y - self.y
-                    dist = np.sqrt(dx * dx + dy * dy)
+        #     for creature in creatures:
+        #         if creature is not self and creature.alive and creature.stun_timer <= 0:
+        #             dx = creature.x - self.x
+        #             dy = creature.y - self.y
+        #             dist = np.sqrt(dx * dx + dy * dy)
 
-                    # Check if within sensor range
-                    if dist > SENSOR_RANGE:
-                        continue
+        #             # Check if within sensor range
+        #             if dist > SENSOR_RANGE:
+        #                 continue
                     
-                    # Calculate relative angle (normalized to [-pi, pi])
-                    relative_angle = np.arctan2(dy, dx) - self.angle
-                    relative_angle = np.arctan2(np.sin(relative_angle), np.cos(relative_angle))
+        #             # Calculate relative angle (normalized to [-pi, pi])
+        #             relative_angle = np.arctan2(dy, dx) - self.angle
+        #             relative_angle = np.arctan2(np.sin(relative_angle), np.cos(relative_angle))
                     
-                    # Check if within field of view and closer than previous closest
-                    if abs(relative_angle) <= half_fov and dist < closest_dist:
-                        closest_creature = creature
-                        closest_dist = dist
+        #             # Check if within field of view and closer than previous closest
+        #             if abs(relative_angle) <= half_fov and dist < closest_dist:
+        #                 closest_creature = creature
+        #                 closest_dist = dist
             
-            # Stun the closest creature if one was found
-            if closest_creature is not None:
-                # Store target for drawing
-                self.target_creature = closest_creature
-                # Stun the target creature
-                closest_creature.stun_timer = 2
-                # Consume some energy for using stun
-                self.energy -= 20
+        #     # Stun the closest creature if one was found
+        #     if closest_creature is not None:
+        #         # Store target for drawing
+        #         self.target_creature = closest_creature
+        #         # Stun the target creature
+        #         closest_creature.stun_timer = 2
+        #         # Consume some energy for using stun
+        #         self.energy -= 20
 
-        if self.target_creature is not None and self.target_creature.stun_timer <= 0:
-            self.target_creature = None
+        # if self.target_creature is not None and self.target_creature.stun_timer <= 0:
+        #     self.target_creature = None
 
         # Only update movement if not stunned
         if self.stun_timer <= 0:

@@ -127,7 +127,8 @@ def save_simulation_state(filename, creatures, foods, stats, generation, gen_tim
         'statistics': serialize_statistics(stats),
         'settings': {
             'CREATURE_COUNT': CREATURE_COUNT,
-            'FOOD_COUNT': FOOD_COUNT,
+            'MAX_FOOD': MAX_FOOD,
+            'FOOD_SPAWN_INTERVAL': FOOD_SPAWN_INTERVAL,
             'GENERATION_TIME': GENERATION_TIME,
             'BRAIN_LAYERS': BRAIN_LAYERS
         }

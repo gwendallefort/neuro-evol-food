@@ -17,9 +17,6 @@ def simulation_step(creatures, foods, dt, speed_multiplier=1):
         creature.update(foods, creatures, dt, speed_multiplier)
         creature.eat(foods)
     
-    while len(foods) < FOOD_COUNT:
-        foods.append(Food())
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -42,7 +39,7 @@ def main():
         )
         for _ in range(CREATURE_COUNT)
     ]
-    foods = [Food() for _ in range(FOOD_COUNT)]
+    foods = [Food() for _ in range(MAX_FOOD)]
     
     stats = Statistics()
     speed_controller = SpeedController()
@@ -50,6 +47,7 @@ def main():
     
     generation = 1
     gen_timer = 0
+    food_spawn_timer = 0  # Timer for constant food spawning
     graph_surface = None
     selected_creature = None
 
@@ -216,6 +214,15 @@ def main():
         # SIMULATION UPDATE
         # =========================
         if not paused:
+            # Update food spawn timer
+            fixed_dt = (1/60) * speed_controller.current_speed
+            food_spawn_timer += fixed_dt
+            
+            # Spawn food at constant rate
+            while food_spawn_timer >= FOOD_SPAWN_INTERVAL and len(foods) < MAX_FOOD:
+                foods.append(Food())
+                food_spawn_timer -= FOOD_SPAWN_INTERVAL
+            
             if speed_controller.turbo_mode:
                 # Turbo: run many steps, skip rendering
                 for _ in range(TURBO_STEPS):
@@ -235,9 +242,10 @@ def main():
                         save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
                         
                         creatures = create_new_generation(creatures)
-                        foods = [Food() for _ in range(FOOD_COUNT)]
+                        foods = [Food() for _ in range(MAX_FOOD)]
                         generation += 1
                         gen_timer = 0
+                        food_spawn_timer = 0  # Reset food spawn timer on new generation
                         graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
             else:
                 # Normal speed
@@ -255,9 +263,10 @@ def main():
                     save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
 
                     creatures = create_new_generation(creatures)
-                    foods = [Food() for _ in range(FOOD_COUNT)]
+                    foods = [Food() for _ in range(MAX_FOOD)]
                     generation += 1
                     gen_timer = 0
+                    food_spawn_timer = 0  # Reset food spawn timer on new generation
                     graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
 
         # =========================

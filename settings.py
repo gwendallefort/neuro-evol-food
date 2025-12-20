@@ -9,7 +9,8 @@ GRAPH_PANEL_WIDTH = 430
 
 # Simulation Settings
 CREATURE_COUNT = 25
-FOOD_COUNT = 35
+MAX_FOOD = 35
+FOOD_SPAWN_INTERVAL = 0.2  # Time in seconds between food spawns
 GENERATION_TIME = 12
 TURBO_STEPS = 50 
 
@@ -20,7 +21,7 @@ SENSOR_RANGE = 200  # Maximum sensing range
 BRAIN_LAYERS = [
     NUM_SECTORS * 2 + 2, # 2 inputs per sector (food + creature) + wall + energy
     8,
-    3  # 3 outputs: angle change, speed, stun activation
+    2  # 2 outputs: angle change, speed
 ]  
 
 # Speed Options
