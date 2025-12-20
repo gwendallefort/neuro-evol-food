@@ -229,6 +229,7 @@ def main():
                     
                     # Check generation end
                     if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
+                        selected_creature = None
                         stats.record_generation(generation, creatures, gen_timer)
                         
                         save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
@@ -248,6 +249,7 @@ def main():
                 
                 # Check generation end
                 if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
+                    selected_creature = None
                     stats.record_generation(generation, creatures, gen_timer)
 
                     save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
