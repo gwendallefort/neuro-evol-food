@@ -56,7 +56,8 @@ def create_new_generation(creatures):
             new_brain
         ))
 
-    while len(new_creatures) < CREATURE_COUNT:
+    alive_count = sum(1 for c in creatures if c.alive)
+    while len(new_creatures) < alive_count * REPRODUCTION_RATE:
         p1, p2 = random.sample(parents, 2)
         child_brain = crossover(p1, p2)
         mutate(child_brain)

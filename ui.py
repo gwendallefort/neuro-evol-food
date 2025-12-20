@@ -236,7 +236,7 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed
         f"Generation: {generation}",
         f"Time Left: {max(0, GENERATION_TIME - gen_timer):.1f}s",
         "",
-        f"Alive: {alive_count}/{CREATURE_COUNT}",
+        f"Alive: {alive_count}/{len(creatures)}",
         f"Current Food : {len(foods)}/{MAX_FOOD}",
         f"Total Food Eaten: {total_food}",
         "",
@@ -354,7 +354,7 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
         content_surface.blit(graph_surface, (5, y_pos))
         y_pos += 390  # Height of graph surface
     else:
-        placeholder = small_font.render("Graphs appear after Gen 2", True, DARK_GRAY)
+        placeholder = small_font.render("Graphs appear after Gen 1", True, DARK_GRAY)
         content_surface.blit(placeholder, (20, y_pos + 100))
         y_pos += 200
 

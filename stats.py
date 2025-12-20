@@ -14,6 +14,7 @@ class Statistics:
         self.worst_fitness = []
         self.total_food_eaten = []
         self.survival_rate = []
+        self.creatures_count = []
         
     def record_generation(self, gen_number, creatures, gen_time):
         """Record stats at the end of each generation"""
@@ -27,10 +28,11 @@ class Statistics:
         self.worst_fitness.append(min(fitnesses))
         self.total_food_eaten.append(food_eaten)
         self.survival_rate.append((alive_count / len(creatures)) * 100)
+        self.creatures_count.append(len(creatures))
     
     def render_graphs(self, width, height):
         """Render matplotlib graphs to a pygame surface"""
-        if len(self.generations) < 2:
+        if len(self.generations) < 1:
             return None
             
         fig, axes = plt.subplots(2, 2, figsize=(width/100, height/100), dpi=100)
@@ -58,8 +60,8 @@ class Statistics:
         
         # Graph 2: Food eaten per generation
         ax2 = axes[0, 1]
-        ax2.bar(self.generations, self.total_food_eaten, color=colors[2], alpha=0.7)
-        ax2.plot(self.generations, self.total_food_eaten, color=colors[2], linewidth=2)
+        ax2.plot(self.generations, self.total_food_eaten, color=colors[2], linewidth=2, marker='o', markersize=3)
+        ax2.fill_between(self.generations, self.total_food_eaten, alpha=0.3, color=colors[2])
         ax2.set_title('Food Eaten Per Generation', fontweight='bold', fontsize=10)
         ax2.set_xlabel('Generation', fontsize=8)
         ax2.set_ylabel('Food Count', fontsize=8)
@@ -67,8 +69,7 @@ class Statistics:
         
         # Graph 3: Survival rate
         ax3 = axes[1, 0]
-        ax3.plot(self.generations, self.survival_rate, 
-                        color=colors[3], linewidth=2, marker='o', markersize=3)
+        ax3.plot(self.generations, self.survival_rate, color=colors[3], linewidth=2, marker='o', markersize=3)
         ax3.fill_between(self.generations, self.survival_rate, alpha=0.3, color=colors[3])
         ax3.set_title('Survival Rate', fontweight='bold', fontsize=10)
         ax3.set_xlabel('Generation', fontsize=8)
@@ -76,22 +77,15 @@ class Statistics:
         ax3.set_ylim(0, 100)
         ax3.tick_params(labelsize=7)
         
-        # Graph 4: Improvement metrics
+        # Graph 4: Population size
         ax4 = axes[1, 1]
-        if len(self.generations) > 1:
-            improvement = [0]
-            for i in range(1, len(self.avg_fitness)):
-                imp = self.avg_fitness[i] - self.avg_fitness[i-1]
-                improvement.append(imp)
-            
-            colors_bars = [colors[0] if x >= 0 else colors[2] for x in improvement]
-            ax4.bar(self.generations, improvement, color=colors_bars, alpha=0.7)
-            ax4.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
-            ax4.set_title('Fitness Change', fontweight='bold', fontsize=10)
-            ax4.set_xlabel('Generation', fontsize=8)
-            ax4.set_ylabel('Δ Fitness', fontsize=8)
-            ax4.tick_params(labelsize=7)
-        
+        ax4.plot(self.generations, self.creatures_count, color=colors[0], linewidth=2, marker='o', markersize=3)
+        ax4.fill_between(self.generations, self.creatures_count, alpha=0.3, color=colors[0])
+        ax4.set_title('Creatures Count', fontweight='bold', fontsize=10)
+        ax4.set_xlabel('Generation', fontsize=8)
+        ax4.set_ylabel('Creatures Count', fontsize=8)
+        ax4.tick_params(labelsize=7)
+
         plt.tight_layout()
         
         # Convert to pygame surface

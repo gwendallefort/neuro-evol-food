@@ -223,51 +223,25 @@ def main():
                 foods.append(Food())
                 food_spawn_timer -= FOOD_SPAWN_INTERVAL
             
-            if speed_controller.turbo_mode:
-                # Turbo: run many steps, skip rendering
-                for _ in range(TURBO_STEPS):
-                    # sim_dt = (1/60) * speed_controller.current_speed
-                    # gen_timer += 1/60  # Use fixed timestep for gen_timer
-                    sim_dt = real_dt * speed_controller.current_speed
-                    # Use fixed timestep for gen_timer to prevent FPS-dependent generation length
-                    fixed_dt = (1/60) * speed_controller.current_speed
-                    gen_timer += fixed_dt
-                    simulation_step(creatures, foods, sim_dt, speed_controller.current_speed)
-                    
-                    # Check generation end
-                    if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
-                        selected_creature = None
-                        stats.record_generation(generation, creatures, gen_timer)
-                        
-                        save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
-                        
-                        creatures = create_new_generation(creatures)
-                        foods = [Food() for _ in range(MAX_FOOD)]
-                        generation += 1
-                        gen_timer = 0
-                        food_spawn_timer = 0  # Reset food spawn timer on new generation
-                        graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
-            else:
-                # Normal speed
-                sim_dt = real_dt * speed_controller.current_speed
-                # Use fixed timestep for gen_timer to prevent FPS-dependent generation length
-                fixed_dt = (1/60) * speed_controller.current_speed
-                gen_timer += fixed_dt
-                simulation_step(creatures, foods, sim_dt, speed_controller.current_speed)
-                
-                # Check generation end
-                if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
-                    selected_creature = None
-                    stats.record_generation(generation, creatures, gen_timer)
+            sim_dt = real_dt * speed_controller.current_speed
+            # Use fixed timestep for gen_timer to prevent FPS-dependent generation length
+            fixed_dt = (1/60) * speed_controller.current_speed
+            gen_timer += fixed_dt
+            simulation_step(creatures, foods, sim_dt, speed_controller.current_speed)
+            
+            # Check generation end
+            if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
+                selected_creature = None
+                stats.record_generation(generation, creatures, gen_timer)
 
-                    save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
+                save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
 
-                    creatures = create_new_generation(creatures)
-                    foods = [Food() for _ in range(MAX_FOOD)]
-                    generation += 1
-                    gen_timer = 0
-                    food_spawn_timer = 0  # Reset food spawn timer on new generation
-                    graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
+                creatures = create_new_generation(creatures)
+                foods = [Food() for _ in range(MAX_FOOD)]
+                generation += 1
+                gen_timer = 0
+                food_spawn_timer = 0  # Reset food spawn timer on new generation
+                graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, 380)
 
         # =========================
         # RENDERING

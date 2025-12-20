@@ -9,10 +9,13 @@ GRAPH_PANEL_WIDTH = 430
 
 # Simulation Settings
 CREATURE_COUNT = 25
-MAX_FOOD = 35
-FOOD_SPAWN_INTERVAL = 0.2  # Time in seconds between food spawns
+MAX_FOOD = 30
+FOOD_SPAWN_INTERVAL = 0.1  # Time in seconds between food spawns
 GENERATION_TIME = 12
 TURBO_STEPS = 50 
+
+# Generation Settings
+REPRODUCTION_RATE = 1.5
 
 # Brain Settings
 FOV_ANGLE = np.pi * 0.75 # Field of view in radians (180 degrees)
