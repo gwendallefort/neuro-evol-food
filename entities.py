@@ -129,7 +129,7 @@ class Creature:
         self.x = max(10, min(SIM_WIDTH - 10, self.x))
         self.y = max(10, min(WINDOW_HEIGHT - 10, self.y))
 
-        self.energy -= (0.1 + self.speed * 0.05)
+        self.energy -= (0.1 + self.speed * 0.04)
 
         if self.energy <= 0:
             self.alive = False

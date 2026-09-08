@@ -232,11 +232,20 @@ def main():
             # Check generation end
             if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
                 selected_creature = None
-                stats.record_generation(generation, creatures, gen_timer)
 
-                save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
+                if creatures:
+                    stats.record_generation(generation, creatures, gen_timer)
+                    save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
 
                 creatures = create_new_generation(creatures)
+                if creatures is None:
+                    print(
+                        f"Simulation ended at generation {generation}: "
+                        "not enough population to create a new generation."
+                    )
+                    running = False
+                    continue
+
                 foods = [Food() for _ in range(MAX_FOOD)]
                 generation += 1
                 gen_timer = 0

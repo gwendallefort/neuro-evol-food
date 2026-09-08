@@ -225,8 +225,12 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed
     alive_count = sum(1 for c in creatures if c.alive)
 
     fitnesses = [calculate_fitness(c) for c in creatures]
-    current_best = max(fitnesses)
-    current_avg = np.mean(fitnesses)
+    if fitnesses:
+        current_best = max(fitnesses)
+        current_avg = float(np.mean(fitnesses))
+    else:
+        current_best = 0
+        current_avg = 0
 
     total_food = sum(c.food_eaten for c in creatures)
     

@@ -32,7 +32,7 @@ def crossover(parent1, parent2):
     child_brain.set_weights(new_weights, new_biases)
     return child_brain
 
-def mutate(brain, mutation_rate=0.1, mutation_strength=0.5):
+def mutate(brain, mutation_rate=0.1, mutation_strength=0.3):
     for w in brain.weights:
         mask = np.random.rand(*w.shape) < mutation_rate
         w += mask * np.random.randn(*w.shape) * mutation_strength
@@ -42,7 +42,13 @@ def mutate(brain, mutation_rate=0.1, mutation_strength=0.5):
         b += mask * np.random.randn(*b.shape) * mutation_strength
 
 def create_new_generation(creatures):
+    if len(creatures) < 2:
+        return None
+
     parents = select_parents(creatures, len(creatures) // 4)
+    if len(parents) < 2:
+        return None
+
     new_creatures = []
 
     # Elitism: Keep top 2 unchanged
@@ -55,9 +61,6 @@ def create_new_generation(creatures):
             random.uniform(50, WINDOW_HEIGHT - 50),
             new_brain
         ))
-
-    if(len(parents) < 2):
-        return new_creatures
 
     alive_count = sum(1 for c in creatures if c.alive)
     while len(new_creatures) < alive_count * REPRODUCTION_RATE:

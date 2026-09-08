@@ -26,18 +26,22 @@ class Statistics:
 
     def record_generation(self, gen_number, creatures, gen_time):
         """Record stats at the end of each generation"""
+        if not creatures:
+            return
+
         fitnesses = [calculate_fitness(c) for c in creatures]
         alive_count = sum(1 for c in creatures if c.alive)
         food_eaten = sum(c.food_eaten for c in creatures)
+        alive_speeds = [c.speed for c in creatures if c.alive]
         
         self.generations.append(gen_number)
         self.best_fitness.append(max(fitnesses))
-        self.avg_fitness.append(np.mean(fitnesses))
+        self.avg_fitness.append(float(np.mean(fitnesses)))
         self.worst_fitness.append(min(fitnesses))
         self.total_food_eaten.append(food_eaten)
         self.survival_rate.append((alive_count / len(creatures)) * 100)
         self.creatures_count.append(len(creatures))
-        self.average_speed.append(np.mean([c.speed for c in creatures if c.alive]))
+        self.average_speed.append(float(np.mean(alive_speeds)) if alive_speeds else 0.0)
     
     def render_graphs(self, width, height):
         """Render matplotlib graphs to a pygame surface"""
