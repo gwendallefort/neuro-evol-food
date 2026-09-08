@@ -3,13 +3,17 @@ import numpy as np
 from brain import NeuralNetwork
 from entities import Creature
 from settings import *
+from spawn import random_spawn_position
+
 
 def calculate_fitness(creature):
     return creature.food_eaten * 10 + creature.energy + creature.time_alive
 
+
 def select_parents(creatures, num_parents):
     sorted_creatures = sorted(creatures, key=calculate_fitness, reverse=True)
     return sorted_creatures[:num_parents]
+
 
 def crossover(parent1, parent2):
     child_brain = NeuralNetwork(BRAIN_LAYERS)
@@ -32,6 +36,7 @@ def crossover(parent1, parent2):
     child_brain.set_weights(new_weights, new_biases)
     return child_brain
 
+
 def mutate(brain, mutation_rate=0.1, mutation_strength=0.3):
     for w in brain.weights:
         mask = np.random.rand(*w.shape) < mutation_rate
@@ -40,6 +45,7 @@ def mutate(brain, mutation_rate=0.1, mutation_strength=0.3):
     for b in brain.biases:
         mask = np.random.rand(*b.shape) < mutation_rate
         b += mask * np.random.randn(*b.shape) * mutation_strength
+
 
 def create_new_generation(creatures):
     if len(creatures) < 2:
@@ -56,21 +62,15 @@ def create_new_generation(creatures):
         new_brain = NeuralNetwork(BRAIN_LAYERS)
         weights, biases = parent.brain.get_weights()
         new_brain.set_weights(weights, biases)
-        new_creatures.append(Creature(
-            random.uniform(50, SIM_WIDTH - 50),
-            random.uniform(50, WINDOW_HEIGHT - 50),
-            new_brain
-        ))
+        x, y = random_spawn_position()
+        new_creatures.append(Creature(x, y, new_brain))
 
     alive_count = sum(1 for c in creatures if c.alive)
     while len(new_creatures) < alive_count * REPRODUCTION_RATE:
         p1, p2 = random.sample(parents, 2)
         child_brain = crossover(p1, p2)
         mutate(child_brain)
-        new_creatures.append(Creature(
-            random.uniform(50, SIM_WIDTH - 50),
-            random.uniform(50, WINDOW_HEIGHT - 50),
-            child_brain
-        ))
+        x, y = random_spawn_position()
+        new_creatures.append(Creature(x, y, child_brain))
 
     return new_creatures

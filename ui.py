@@ -2,6 +2,7 @@ import pygame
 import numpy as np
 from settings import *
 from genetics import calculate_fitness
+from brain_viz import visualize_network
 
 
 class ScrollablePanel:
@@ -16,34 +17,42 @@ class ScrollablePanel:
         self.scrollbar_dragging = False
         self.drag_start_y = 0
         self.drag_start_offset = 0
-        
+
     def set_content_height(self, height):
         self.content_height = height
-        
+
     def get_max_scroll(self):
         return max(0, self.content_height - self.height)
-        
+
     def can_scroll(self):
         return self.content_height > self.height
-        
+
     def scroll(self, amount):
         if self.can_scroll():
             self.scroll_offset = max(0, min(self.get_max_scroll(), self.scroll_offset + amount))
-            
+
+    def _scrollbar_metrics(self):
+        """Return (handle_height, handle_y) for the current scroll state."""
+        handle_height = max(30, (self.height / self.content_height) * self.height)
+        max_scroll = self.get_max_scroll()
+        if max_scroll > 0:
+            handle_y = self.y + (self.scroll_offset / max_scroll) * (self.height - handle_height)
+        else:
+            handle_y = self.y
+        return handle_height, handle_y
+
     def handle_mouse_event(self, event):
         if not self.can_scroll():
             return False
-            
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         scrollbar_x = self.x + self.width - self.scrollbar_width
-        
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
                 if scrollbar_x <= mouse_x <= scrollbar_x + self.scrollbar_width:
-                    # Check if clicking on scrollbar handle
-                    handle_height = max(30, (self.height / self.content_height) * self.height)
-                    handle_y = self.y + (self.scroll_offset / self.get_max_scroll()) * (self.height - handle_height) if self.get_max_scroll() > 0 else self.y
-                    
+                    handle_height, handle_y = self._scrollbar_metrics()
+
                     if handle_y <= mouse_y <= handle_y + handle_height:
                         self.scrollbar_dragging = True
                         self.drag_start_y = mouse_y
@@ -57,67 +66,72 @@ class ScrollablePanel:
                 if self.x <= mouse_x <= self.x + self.width and self.y <= mouse_y <= self.y + self.height:
                     self.scroll(30)
                     return True
-                    
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 self.scrollbar_dragging = False
-                
+
         elif event.type == pygame.MOUSEMOTION:
             if self.scrollbar_dragging:
                 mouse_x, mouse_y = event.pos
                 delta_y = mouse_y - self.drag_start_y
-                handle_height = max(30, (self.height / self.content_height) * self.height)
-                scroll_ratio = delta_y / (self.height - handle_height) if (self.height - handle_height) > 0 else 0
-                self.scroll_offset = max(0, min(self.get_max_scroll(), 
-                                               self.drag_start_offset + scroll_ratio * self.get_max_scroll()))
+                handle_height, _ = self._scrollbar_metrics()
+                scroll_ratio = (
+                    delta_y / (self.height - handle_height)
+                    if (self.height - handle_height) > 0 else 0
+                )
+                self.scroll_offset = max(
+                    0,
+                    min(
+                        self.get_max_scroll(),
+                        self.drag_start_offset + scroll_ratio * self.get_max_scroll(),
+                    ),
+                )
                 return True
-                
+
         return False
-        
+
     def draw_scrollbar(self, screen):
         if not self.can_scroll():
             return
-            
+
         scrollbar_x = self.x + self.width - self.scrollbar_width
-        
-        # Draw scrollbar background
-        pygame.draw.rect(screen, (200, 200, 200), 
-                        (scrollbar_x, self.y, self.scrollbar_width, self.height))
-        
-        # Draw scrollbar handle
-        handle_height = max(30, (self.height / self.content_height) * self.height)
-        handle_y = self.y + (self.scroll_offset / self.get_max_scroll()) * (self.height - handle_height) if self.get_max_scroll() > 0 else self.y
-        
+
+        pygame.draw.rect(
+            screen, (200, 200, 200),
+            (scrollbar_x, self.y, self.scrollbar_width, self.height),
+        )
+
+        handle_height, handle_y = self._scrollbar_metrics()
         handle_color = (120, 120, 120) if self.scrollbar_dragging else (150, 150, 150)
-        pygame.draw.rect(screen, handle_color, 
-                        (scrollbar_x + 2, handle_y, self.scrollbar_width - 4, handle_height), 
-                        border_radius=5)
-        
+        pygame.draw.rect(
+            screen, handle_color,
+            (scrollbar_x + 2, handle_y, self.scrollbar_width - 4, handle_height),
+            border_radius=5,
+        )
+
     def begin_draw(self, screen):
         """Returns a surface to draw content on"""
-        # Create a surface for the content
-        content_surface = pygame.Surface((self.width - (self.scrollbar_width if self.can_scroll() else 0), 
-                                         self.content_height), pygame.SRCALPHA)
+        content_surface = pygame.Surface(
+            (self.width - (self.scrollbar_width if self.can_scroll() else 0),
+             self.content_height),
+            pygame.SRCALPHA,
+        )
         content_surface.fill(GRAY)
         return content_surface
-        
+
     def end_draw(self, screen, content_surface):
         """Blits the content surface with scrolling applied"""
-        # Create viewport
-        viewport = pygame.Surface((self.width - (self.scrollbar_width if self.can_scroll() else 0), 
-                                  self.height))
+        viewport = pygame.Surface(
+            (self.width - (self.scrollbar_width if self.can_scroll() else 0),
+             self.height),
+        )
         viewport.fill(GRAY)
-        
-        # Blit portion of content based on scroll offset
+
         viewport.blit(content_surface, (0, -self.scroll_offset))
-        
-        # Blit viewport to screen
         screen.blit(viewport, (self.x, self.y))
-        
-        # Draw scrollbar
+
         self.draw_scrollbar(screen)
-        
-        # Draw border
         pygame.draw.line(screen, DARK_GRAY, (self.x, self.y), (self.x, self.y + self.height), 2)
 
 
@@ -147,9 +161,9 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, foods
         current_avg = 0
 
     total_food = sum(c.food_eaten for c in creatures)
-    
+
     best_ever = max(stats.best_fitness) if stats.best_fitness else current_best
-    
+
     texts = [
         f"Seed: {seed}" if seed is not None else "Seed: —",
         f"Generation: {generation}",
@@ -163,7 +177,7 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, foods
         f"Current Avg: {current_avg:.0f}",
         f"All-Time Best: {best_ever:.0f}",
     ]
-    
+
     y_offset = y_start
     for text in texts:
         if text == "":
@@ -172,7 +186,7 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, foods
         surface = font.render(text, True, BLACK)
         screen.blit(surface, (10 + x_offset, y_offset))
         y_offset += 28
-    
+
     return y_offset
 
 
@@ -184,13 +198,13 @@ def draw_controls_help(screen, font, x_offset=0, y_start=0):
         "V - Show/Hide FOV",
         "Mouse Wheel - Scroll Panel"
     ]
-    
+
     y = y_start
     for text in controls:
         surface = font.render(text, True, DARK_GRAY)
         screen.blit(surface, (10 + x_offset, y))
         y += 20
-    
+
     return y
 
 
@@ -198,30 +212,26 @@ def draw_brain_visualization(screen, font, selected_creature, foods, creatures, 
     """Draw neural network visualization for selected creature"""
     if selected_creature is None or not selected_creature.alive:
         return y_start
-    
-    # Title
+
     title = font.render("Neural Network", True, BLACK)
     screen.blit(title, (10 + x_offset, y_start))
     y_pos = y_start + 28
-    
-    # Get current inputs
+
     inputs = selected_creature.sense(foods, creatures)
-    
-    # Create surface for brain visualization
+
     brain_width = GRAPH_PANEL_WIDTH - 20
     brain_height = BRAIN_LAYERS[0] * 30
     brain_surface = pygame.Surface((brain_width, brain_height))
     brain_surface.fill(WHITE)
-    
-    # Visualize the network
-    selected_creature.brain.visualize(brain_surface, 10, 10, brain_width - 20, brain_height - 20, inputs)
-    
-    # Blit to screen
+
+    visualize_network(
+        selected_creature.brain, brain_surface, 10, 10,
+        brain_width - 20, brain_height - 20, inputs,
+    )
+
     screen.blit(brain_surface, (10 + x_offset, y_pos))
     y_pos += brain_height + 10
-    
-    # Show creature stats
-    from genetics import calculate_fitness
+
     fitness = calculate_fitness(selected_creature)
     stats_text = [
         f"Fitness: {fitness:.0f}",
@@ -229,35 +239,32 @@ def draw_brain_visualization(screen, font, selected_creature, foods, creatures, 
         f"Energy: {selected_creature.energy:.0f}",
         f"Time Alive: {selected_creature.time_alive:.1f}s"
     ]
-    
+
     small_font = pygame.font.Font(None, 18)
     for text in stats_text:
         surface = small_font.render(text, True, DARK_GRAY)
         screen.blit(surface, (10 + x_offset, y_pos))
         y_pos += 20
-    
+
     return y_pos + 10
 
 
 def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, graph_surface, selected_creature=None, foods=None, seed=None):
     """Draw the entire UI panel with scrolling"""
-    # Draw panel background
     draw_panel_background(screen)
-    
-    # Begin drawing on scrollable content
+
     content_surface = scrollable_panel.begin_draw(screen)
-    
-    # Draw FPS at top
+
     current_fps = clock.get_fps()
     y_pos = draw_fps(content_surface, font, current_fps, x_offset=0, y_start=10)
-    
-    # Draw stats below FPS
-    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, foods, x_offset=0, y_start=y_pos + 10, seed=seed)
-    
-    # Add spacing before graphs
+
+    y_pos = draw_stats_text(
+        content_surface, font, generation, creatures, gen_timer, stats, foods,
+        x_offset=0, y_start=y_pos + 10, seed=seed,
+    )
+
     y_pos += 20
-    
-    # Graphs
+
     if graph_surface:
         content_surface.blit(graph_surface, (5, y_pos))
         y_pos += GRAPH_PANEL_HEIGHT
@@ -266,30 +273,25 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
         content_surface.blit(placeholder, (20, y_pos + 100))
         y_pos += 200
 
-    # Add spacing
     y_pos += 20
-    
-    # Draw brain visualization if creature selected
+
     if selected_creature and foods is not None:
-        y_pos = draw_brain_visualization(content_surface, font, selected_creature, foods, creatures, x_offset=0, y_start=y_pos)
-    
-    # Add spacing before controls
+        y_pos = draw_brain_visualization(
+            content_surface, font, selected_creature, foods, creatures,
+            x_offset=0, y_start=y_pos,
+        )
+
     y_pos += 20
-    
-    # Controls help at the end
+
     y_pos = draw_controls_help(content_surface, small_font, x_offset=0, y_start=y_pos)
 
-    # Set content height    
     scrollable_panel.set_content_height(y_pos + 20)
-
-    # End drawing and apply scroll
     scrollable_panel.end_draw(screen, content_surface)
 
 
 def draw_status_indicators(screen, font, paused, show_fov=True):
     """Draw status indicators on the simulation area (paused, FOV)"""
-    # Paused indicator
     if paused:
         pause_surface = font.render("PAUSED", True, RED)
-        pygame.draw.rect(screen, WHITE, (SIM_WIDTH//2 - 45, 15, 90, 30))
-        screen.blit(pause_surface, (SIM_WIDTH//2 - 35, 20))
+        pygame.draw.rect(screen, WHITE, (SIM_WIDTH // 2 - 45, 15, 90, 30))
+        screen.blit(pause_surface, (SIM_WIDTH // 2 - 35, 20))
