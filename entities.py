@@ -109,7 +109,7 @@ class Creature:
     def think(self, inputs):
         return self.brain.forward(inputs)
 
-    def update(self, foods, creatures, dt, speed_multiplier=1):
+    def update(self, foods, creatures, dt):
         if not self.alive:
             return
 
@@ -117,7 +117,6 @@ class Creature:
 
         inputs = self.sense(foods, creatures)
         outputs = self.think(inputs)
-        outputs = outputs * speed_multiplier
 
         self.angle += outputs[0] * 0.2
         self.speed = (outputs[1] + 1) * 1.5 + 0.5

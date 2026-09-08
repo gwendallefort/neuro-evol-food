@@ -13,11 +13,10 @@ CREATURE_COUNT = 25
 MAX_FOOD = 30
 FOOD_SPAWN_INTERVAL = 0.1  # Time in seconds between food spawns
 GENERATION_TIME = 12
-TURBO_STEPS = 50
 
 # Set to an int for a reproducible run, or None to pick a random seed each launch.
 # You can also pass --seed on the command line (overrides this value).
-SIMULATION_SEED = 132155668
+SIMULATION_SEED = None
 
 # Generation Settings
 REPRODUCTION_RATE = 1.5
@@ -30,10 +29,7 @@ BRAIN_LAYERS = [
     NUM_SECTORS * 2 + 2, # 2 inputs per sector (food + creature) + wall + energy
     8,
     2  # 2 outputs: angle change, speed
-]  
-
-# Speed Options
-SPEED_OPTIONS = [1, 2, 5, 10, 25]
+]
 
 # Colors
 WHITE = (255, 255, 255)

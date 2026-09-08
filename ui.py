@@ -3,45 +3,6 @@ import numpy as np
 from settings import *
 from genetics import calculate_fitness
 
-class SpeedController:
-    def __init__(self):
-        self.speed_index = 0  # Default to 1x speed
-        self.turbo_mode = False
-        
-    @property
-    def current_speed(self):
-        return SPEED_OPTIONS[self.speed_index]
-    
-    def increase_speed(self):
-        if self.speed_index < len(SPEED_OPTIONS) - 1:
-            self.speed_index += 1
-            
-    def decrease_speed(self):
-        if self.speed_index > 0:
-            self.speed_index -= 1
-            
-    def set_speed(self, index):
-        if 0 <= index < len(SPEED_OPTIONS):
-            self.speed_index = index
-            
-    def toggle_turbo(self):
-        self.turbo_mode = not self.turbo_mode
-        
-    def get_display_text(self):
-        if self.turbo_mode:
-            return "TURBO"
-        return f"{self.current_speed}x"
-    
-    def get_color(self):
-        if self.turbo_mode:
-            return ORANGE
-        elif self.current_speed > 5:
-            return YELLOW
-        elif self.current_speed > 1:
-            return GREEN
-        else:
-            return BLACK
-
 
 class ScrollablePanel:
     def __init__(self, x, y, width, height):
@@ -166,53 +127,6 @@ def draw_panel_background(screen):
     pygame.draw.line(screen, DARK_GRAY, (SIM_WIDTH, 0), (SIM_WIDTH, WINDOW_HEIGHT), 2)
 
 
-def draw_speed_indicator(screen, font, speed_controller, x_offset=0, y_offset=0):
-    """Draw speed control panel"""
-    x = 10 + x_offset
-    y = 180 + y_offset
-    
-    # Title
-    title = font.render("Speed Control", True, BLACK)
-    screen.blit(title, (x, y))
-    y += 28
-    
-    # Speed buttons visual
-    button_width = 55
-    button_height = 25
-    spacing = 5
-    
-    for i, speed in enumerate(SPEED_OPTIONS):
-        bx = x + i * (button_width + spacing)
-        by = y
-        
-        # Highlight current speed
-        if i == speed_controller.speed_index and not speed_controller.turbo_mode:
-            color = GREEN
-            text_color = WHITE
-        else:
-            color = WHITE
-            text_color = BLACK
-            
-        pygame.draw.rect(screen, color, (bx, by, button_width, button_height))
-        pygame.draw.rect(screen, BLACK, (bx, by, button_width, button_height), 1)
-        
-        speed_text = font.render(f"{speed}x", True, text_color)
-        text_rect = speed_text.get_rect(center=(bx + button_width//2, by + button_height//2))
-        screen.blit(speed_text, text_rect)
-    
-    # Turbo button
-    y += button_height + 10
-    turbo_color = ORANGE if speed_controller.turbo_mode else WHITE
-    turbo_text_color = WHITE if speed_controller.turbo_mode else BLACK
-    pygame.draw.rect(screen, turbo_color, (x, y, 120, button_height))
-    pygame.draw.rect(screen, BLACK, (x, y, 120, button_height), 1)
-    turbo_text = font.render("TURBO [T]", True, turbo_text_color)
-    text_rect = turbo_text.get_rect(center=(x + 60, y + button_height//2))
-    screen.blit(turbo_text, text_rect)
-    
-    return y + button_height + 10
-    
-
 def draw_fps(screen, font, fps, x_offset=0, y_start=0):
     """Draw FPS display at the top"""
     fps_text = f"FPS: {fps:.1f}"
@@ -221,7 +135,7 @@ def draw_fps(screen, font, fps, x_offset=0, y_start=0):
     return y_start + 28
 
 
-def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=20, seed=None):
+def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, foods, x_offset=0, y_start=20, seed=None):
     alive_count = sum(1 for c in creatures if c.alive)
 
     fitnesses = [calculate_fitness(c) for c in creatures]
@@ -268,11 +182,6 @@ def draw_controls_help(screen, font, x_offset=0, y_start=0):
         "Controls:",
         "SPACE - Pause/Resume",
         "V - Show/Hide FOV",
-        "UP/DOWN or +/- - Speed",
-        "1-6 - Preset Speeds",
-        "T - Toggle Turbo",
-        "S - Save Simulation",
-        "L - Load Simulation",
         "Mouse Wheel - Scroll Panel"
     ]
     
@@ -330,7 +239,7 @@ def draw_brain_visualization(screen, font, selected_creature, foods, creatures, 
     return y_pos + 10
 
 
-def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface, selected_creature=None, foods=None, seed=None):
+def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, graph_surface, selected_creature=None, foods=None, seed=None):
     """Draw the entire UI panel with scrolling"""
     # Draw panel background
     draw_panel_background(screen)
@@ -343,13 +252,7 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     y_pos = draw_fps(content_surface, font, current_fps, x_offset=0, y_start=10)
     
     # Draw stats below FPS
-    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=y_pos + 10, seed=seed)
-    
-    # Add some spacing
-    y_pos += 10
-    
-    # Draw speed control
-    # y_pos = draw_speed_indicator(content_surface, font, speed_controller, x_offset=0, y_offset=y_pos - 180)
+    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, foods, x_offset=0, y_start=y_pos + 10, seed=seed)
     
     # Add spacing before graphs
     y_pos += 20
@@ -383,8 +286,8 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     scrollable_panel.end_draw(screen, content_surface)
 
 
-def draw_status_indicators(screen, font, paused, speed_controller, show_fov=True):
-    """Draw status indicators on the simulation area (paused, speed, FOV)"""
+def draw_status_indicators(screen, font, paused, show_fov=True):
+    """Draw status indicators on the simulation area (paused, FOV)"""
     # Paused indicator
     if paused:
         pause_surface = font.render("PAUSED", True, RED)
