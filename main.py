@@ -10,17 +10,23 @@ from genetics import create_new_generation
 from stats import Statistics
 from ui import SpeedController, ScrollablePanel, draw_ui_panel, draw_status_indicators
 from save_load import save_simulation_state, load_simulation_state, save_auto
+from seed import parse_seed_arg, ui_rng
+
 
 def simulation_step(creatures, foods, dt, speed_multiplier=1):
     """Run one simulation step"""
     for creature in creatures:
         creature.update(foods, creatures, dt, speed_multiplier)
         creature.eat(foods)
-    
+
+
 def main():
+    seed = parse_seed_arg()
+    print(f"Simulation seed: {seed}")
+
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Evolution Simulation")
+    pygame.display.set_caption(f"Evolution Simulation (seed={seed})")
     clock = pygame.time.Clock()
     font = pygame.font.Font(None, 24)
     small_font = pygame.font.Font(None, 20)
@@ -40,11 +46,11 @@ def main():
         for _ in range(CREATURE_COUNT)
     ]
     foods = [Food() for _ in range(MAX_FOOD)]
-    
+
     stats = Statistics()
     speed_controller = SpeedController()
     scrollable_panel = ScrollablePanel(SIM_WIDTH, 0, WINDOW_WIDTH - SIM_WIDTH, WINDOW_HEIGHT)
-    
+
     generation = 1
     gen_timer = 0
     food_spawn_timer = 0  # Timer for constant food spawning
@@ -54,19 +60,19 @@ def main():
     running = True
     paused = False
     show_fov = False
-    
+
     # Save/Load status message
     status_message = None
     status_message_timer = 0
-    
+
     while running:
         real_dt = clock.tick(60) / 1000
-        
+
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            
+
             # Handle scrollable panel events first
             elif event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION):
                 # Check if click is in simulation area (not panel)
@@ -86,18 +92,18 @@ def main():
                         scrollable_panel.handle_mouse_event(event)
                 else:
                     scrollable_panel.handle_mouse_event(event)
-                
+
             if event.type == pygame.KEYDOWN:
                 # Pause
                 if event.key == pygame.K_SPACE:
                     paused = not paused
-                    
+
                 # Speed controls
                 elif event.key in (pygame.K_UP, pygame.K_PLUS, pygame.K_EQUALS):
                     speed_controller.increase_speed()
                 elif event.key in (pygame.K_DOWN, pygame.K_MINUS):
                     speed_controller.decrease_speed()
-                    
+
                 # Preset speeds (1-6 keys)
                 elif event.key == pygame.K_1:
                     speed_controller.set_speed(0)
@@ -109,45 +115,45 @@ def main():
                     speed_controller.set_speed(3)
                 elif event.key == pygame.K_5:
                     speed_controller.set_speed(4)
-                    
+
                 # Turbo mode
                 elif event.key == pygame.K_t:
                     speed_controller.toggle_turbo()
-                
+
                 # Toggle FOV visualization
                 elif event.key == pygame.K_v:
                     show_fov = not show_fov
-                
+
                 # Save simulation state
                 elif event.key == pygame.K_s:
                     # Hide tkinter root window
                     root = tk.Tk()
                     root.withdraw()
                     root.attributes('-topmost', True)
-                    
+
                     # Generate default filename with timestamp
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     default_filename = f"simulation_save_{timestamp}.json"
-                    
+
                     filename = filedialog.asksaveasfilename(
                         defaultextension=".json",
                         filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
                         initialfile=default_filename,
                         title="Save Simulation State"
                     )
-                    
+
                     root.destroy()
-                    
+
                     if filename:
                         try:
                             # Find selected creature index
                             selected_index = None
                             if selected_creature and selected_creature in creatures:
                                 selected_index = creatures.index(selected_creature)
-                            
+
                             save_simulation_state(
                                 filename, creatures, foods, stats,
-                                generation, gen_timer, selected_index
+                                generation, gen_timer, selected_index, seed=seed
                             )
                             status_message = f"Saved to {os.path.basename(filename)}"
                             status_message_timer = 3.0  # Show for 3 seconds
@@ -157,47 +163,47 @@ def main():
                         except Exception as e:
                             status_message = f"Save failed: {str(e)}"
                             status_message_timer = 3.0
-                
+
                 # Load simulation state
                 elif event.key == pygame.K_l:
                     # Hide tkinter root window
                     root = tk.Tk()
                     root.withdraw()
                     root.attributes('-topmost', True)
-                    
+
                     filename = filedialog.askopenfilename(
                         defaultextension=".json",
                         filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
                         title="Load Simulation State"
                     )
-                    
+
                     root.destroy()
-                    
+
                     if filename:
                         try:
                             result = load_simulation_state(filename)
                             if result is not None:
                                 loaded_creatures, loaded_foods, loaded_stats, loaded_gen, loaded_timer, selected_index = result
-                                
+
                                 # Replace current state
                                 creatures = loaded_creatures
                                 foods = loaded_foods
                                 stats = loaded_stats
                                 generation = loaded_gen
                                 gen_timer = loaded_timer
-                                
+
                                 # Restore selected creature
                                 if selected_index is not None and 0 <= selected_index < len(creatures):
                                     selected_creature = creatures[selected_index]
                                 else:
                                     selected_creature = None
-                                
+
                                 # Regenerate graph surface
                                 if len(stats.generations) >= 2:
                                     graph_surface = stats.render_graphs(GRAPH_PANEL_WIDTH, GRAPH_PANEL_HEIGHT)
                                 else:
                                     graph_surface = None
-                                
+
                                 status_message = f"Loaded from {os.path.basename(filename)}"
                                 status_message_timer = 3.0
                             else:
@@ -208,34 +214,31 @@ def main():
                             status_message_timer = 3.0
 
                 elif event.key == pygame.K_n:
-                    selected_creature = random.choice(creatures) if creatures else None
+                    selected_creature = ui_rng.choice(creatures) if creatures else None
 
         # =========================
         # SIMULATION UPDATE
         # =========================
         if not paused:
-            # Update food spawn timer
-            fixed_dt = (1/60) * speed_controller.current_speed
+            # Fixed timestep so results do not depend on real FPS
+            fixed_dt = (1 / 60) * speed_controller.current_speed
             food_spawn_timer += fixed_dt
-            
+
             # Spawn food at constant rate
             while food_spawn_timer >= FOOD_SPAWN_INTERVAL and len(foods) < MAX_FOOD:
                 foods.append(Food())
                 food_spawn_timer -= FOOD_SPAWN_INTERVAL
-            
-            sim_dt = real_dt * speed_controller.current_speed
-            # Use fixed timestep for gen_timer to prevent FPS-dependent generation length
-            fixed_dt = (1/60) * speed_controller.current_speed
+
             gen_timer += fixed_dt
-            simulation_step(creatures, foods, sim_dt, speed_controller.current_speed)
-            
+            simulation_step(creatures, foods, fixed_dt, speed_controller.current_speed)
+
             # Check generation end
             if gen_timer >= GENERATION_TIME or all(not c.alive for c in creatures):
                 selected_creature = None
 
                 if creatures:
                     stats.record_generation(generation, creatures, gen_timer)
-                    save_auto(save_folder, creatures, foods, stats, generation, gen_timer)
+                    save_auto(save_folder, creatures, foods, stats, generation, gen_timer, seed=seed)
 
                 creatures = create_new_generation(creatures)
                 if creatures is None:
@@ -257,24 +260,28 @@ def main():
         # =========================
         screen.fill(WHITE)
         pygame.draw.rect(screen, WHITE, (0, 0, SIM_WIDTH, WINDOW_HEIGHT))
-        
+
         # Draw simulation
         for food in foods:
             food.draw(screen)
         for creature in creatures:
             creature.draw(screen, show_fov)
-        
+
         # Highlight selected creature
         if selected_creature and selected_creature.alive:
-            pygame.draw.circle(screen, YELLOW, (int(selected_creature.x), int(selected_creature.y)), 
+            pygame.draw.circle(screen, YELLOW, (int(selected_creature.x), int(selected_creature.y)),
                              selected_creature.radius + 3, 3)
 
         # Right panel with scrolling
-        draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface, selected_creature, foods)
+        draw_ui_panel(
+            screen, scrollable_panel, font, small_font, clock, generation, creatures,
+            gen_timer, stats, speed_controller, graph_surface, selected_creature, foods,
+            seed=seed,
+        )
 
         # Status indicators
         draw_status_indicators(screen, font, paused, speed_controller, show_fov)
-        
+
         # Update and draw status message
         if status_message_timer > 0:
             status_message_timer -= real_dt
@@ -292,6 +299,7 @@ def main():
         pygame.display.flip()
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()

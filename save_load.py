@@ -66,10 +66,7 @@ def serialize_food(food):
 
 def deserialize_food(data):
     """Deserialize a dictionary back to a Food"""
-    food = Food()
-    food.x = data['x']
-    food.y = data['y']
-    return food
+    return Food(data['x'], data['y'])
 
 
 def serialize_statistics(stats):
@@ -93,18 +90,18 @@ def deserialize_statistics(data):
     stats.survival_rate = data['survival_rate']
     return stats
 
-def save_auto(save_folder, creatures, foods, stats, generation, gen_timer):
+def save_auto(save_folder, creatures, foods, stats, generation, gen_timer, seed=None):
     """
     Auto-save at end of generation
     """
     try:
         # Generate filename for this generation
         save_filename = os.path.join(save_folder, f"generation_{generation:04d}.json")
-        save_simulation_state(save_filename, creatures, foods, stats, generation, gen_timer)
+        save_simulation_state(save_filename, creatures, foods, stats, generation, gen_timer, seed=seed)
     except Exception as e:
         print(f"Auto-save failed for generation {generation}: {e}")
 
-def save_simulation_state(filename, creatures, foods, stats, generation, gen_timer, selected_creature_index=None):
+def save_simulation_state(filename, creatures, foods, stats, generation, gen_timer, selected_creature_index=None, seed=None):
     """
     Save the entire simulation state to a JSON file.
     
@@ -116,12 +113,14 @@ def save_simulation_state(filename, creatures, foods, stats, generation, gen_tim
         generation: Current generation number
         gen_timer: Current generation timer
         selected_creature_index: Index of selected creature (if any)
+        seed: Simulation RNG seed used for this run (if any)
     """
     state = {
         'version': '1.0',
         'generation': int(generation),
         'gen_timer': float(gen_timer),
         'selected_creature_index': selected_creature_index,
+        'seed': seed,
         'creatures': [serialize_creature(c) for c in creatures],
         'foods': [serialize_food(f) for f in foods],
         'statistics': serialize_statistics(stats),

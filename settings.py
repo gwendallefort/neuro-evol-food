@@ -13,7 +13,11 @@ CREATURE_COUNT = 25
 MAX_FOOD = 30
 FOOD_SPAWN_INTERVAL = 0.1  # Time in seconds between food spawns
 GENERATION_TIME = 12
-TURBO_STEPS = 50 
+TURBO_STEPS = 50
+
+# Set to an int for a reproducible run, or None to pick a random seed each launch.
+# You can also pass --seed on the command line (overrides this value).
+SIMULATION_SEED = 132155668
 
 # Generation Settings
 REPRODUCTION_RATE = 1.5

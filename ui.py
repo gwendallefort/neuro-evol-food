@@ -221,7 +221,7 @@ def draw_fps(screen, font, fps, x_offset=0, y_start=0):
     return y_start + 28
 
 
-def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=20):
+def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=20, seed=None):
     alive_count = sum(1 for c in creatures if c.alive)
 
     fitnesses = [calculate_fitness(c) for c in creatures]
@@ -237,6 +237,7 @@ def draw_stats_text(screen, font, generation, creatures, gen_timer, stats, speed
     best_ever = max(stats.best_fitness) if stats.best_fitness else current_best
     
     texts = [
+        f"Seed: {seed}" if seed is not None else "Seed: —",
         f"Generation: {generation}",
         f"Time Left: {max(0, GENERATION_TIME - gen_timer):.1f}s",
         "",
@@ -329,7 +330,7 @@ def draw_brain_visualization(screen, font, selected_creature, foods, creatures, 
     return y_pos + 10
 
 
-def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface, selected_creature=None, foods=None):
+def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation, creatures, gen_timer, stats, speed_controller, graph_surface, selected_creature=None, foods=None, seed=None):
     """Draw the entire UI panel with scrolling"""
     # Draw panel background
     draw_panel_background(screen)
@@ -342,7 +343,7 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     y_pos = draw_fps(content_surface, font, current_fps, x_offset=0, y_start=10)
     
     # Draw stats below FPS
-    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=y_pos + 10)
+    y_pos = draw_stats_text(content_surface, font, generation, creatures, gen_timer, stats, speed_controller, foods, x_offset=0, y_start=y_pos + 10, seed=seed)
     
     # Add some spacing
     y_pos += 10

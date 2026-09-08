@@ -243,9 +243,9 @@ class Creature:
 
 
 class Food:
-    def __init__(self):
-        self.x = random.uniform(20, SIM_WIDTH - 20)
-        self.y = random.uniform(20, WINDOW_HEIGHT - 20)
+    def __init__(self, x=None, y=None):
+        self.x = random.uniform(20, SIM_WIDTH - 20) if x is None else x
+        self.y = random.uniform(20, WINDOW_HEIGHT - 20) if y is None else y
         self.radius = 5
 
     def draw(self, screen):
