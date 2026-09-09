@@ -1,4 +1,15 @@
+# /// script
+# dependencies = [
+#   "numpy",
+# ]
+# ///
+"""Neuro-evolution food simulation (desktop + pygbag/web)."""
+
+import asyncio
+
+import numpy as np  # noqa: F401 — must be imported early for pygbag dependency detection
 import pygame
+
 from settings import *
 from entities import Creature, Food
 from genetics import create_new_generation
@@ -7,6 +18,7 @@ from ui import ScrollablePanel, draw_ui_panel, draw_status_indicators
 from seed import parse_seed_arg, ui_rng
 from spawn import random_spawn_position
 from render_entities import draw_creature, draw_food
+from web_platform import IS_WEB, configure_web_display, yield_frame
 
 
 def simulation_step(creatures, foods, dt):
@@ -113,13 +125,18 @@ def render_frame(screen, foods, creatures, selected_creature, show_fov,
     pygame.display.flip()
 
 
-def main():
+async def main():
     seed = parse_seed_arg()
     print(f"Simulation seed: {seed}")
 
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption(f"Evolution Simulation (seed={seed})")
+
+    # Pygbag's default template leaves gui_divider=2 (half-width canvas) until
+    # main() returns. Our loop never returns, so restore full-width sizing here.
+    configure_web_display()
+
     clock = pygame.time.Clock()
     font = pygame.font.Font(None, 24)
     small_font = pygame.font.Font(None, 20)
@@ -171,8 +188,11 @@ def main():
             gen_timer, stats, graph_surface, state['paused'], seed,
         )
 
-    pygame.quit()
+        await yield_frame()
+
+    if not IS_WEB:
+        pygame.quit()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
