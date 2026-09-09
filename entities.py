@@ -1,14 +1,16 @@
-import numpy as np
+import math
 import random
 from settings import *
 from brain import NeuralNetwork
+
+_SENSOR_RANGE_SQ = SENSOR_RANGE * SENSOR_RANGE
 
 
 class Creature:
     def __init__(self, x, y, brain=None):
         self.x = x
         self.y = y
-        self.angle = random.uniform(0, 2 * np.pi)
+        self.angle = random.uniform(0, 2 * math.pi)
         self.speed = 2
         self.radius = 10
         self.energy = 100
@@ -36,13 +38,14 @@ class Creature:
 
             dx = entity.x - self.x
             dy = entity.y - self.y
-            dist = np.sqrt(dx * dx + dy * dy)
+            dist_sq = dx * dx + dy * dy
 
-            if dist > SENSOR_RANGE:
+            if dist_sq > _SENSOR_RANGE_SQ:
                 continue
 
-            relative_angle = np.arctan2(dy, dx) - self.angle
-            relative_angle = np.arctan2(np.sin(relative_angle), np.cos(relative_angle))
+            dist = math.sqrt(dist_sq)
+            relative_angle = math.atan2(dy, dx) - self.angle
+            relative_angle = math.atan2(math.sin(relative_angle), math.cos(relative_angle))
 
             if abs(relative_angle) <= half_fov:
                 sector_idx = int((relative_angle + half_fov) / sector_angle)
@@ -72,7 +75,7 @@ class Creature:
             for dist in sector_creature_dist
         ]
 
-        wall_dist = np.tanh(
+        wall_dist = math.tanh(
             min(
                 self.x,
                 self.y,
@@ -81,7 +84,7 @@ class Creature:
             ) / 100
         )
 
-        energy_input = np.tanh(self.energy / 100)
+        energy_input = math.tanh(self.energy / 100)
 
         # Return: [food_sector_0, ..., food_sector_N-1, creature_sector_0, ..., creature_sector_N-1, wall_dist, energy]
         return food_inputs + creature_inputs + [wall_dist, energy_input]
@@ -101,8 +104,8 @@ class Creature:
         self.angle += outputs[0] * 0.2
         self.speed = (outputs[1] + 1) * 1.5 + 0.5
 
-        self.x += np.cos(self.angle) * self.speed
-        self.y += np.sin(self.angle) * self.speed
+        self.x += math.cos(self.angle) * self.speed
+        self.y += math.sin(self.angle) * self.speed
 
         # Keep within simulation bounds
         self.x = max(10, min(SIM_WIDTH - 10, self.x))

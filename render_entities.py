@@ -1,9 +1,20 @@
+import math
 import pygame
-import numpy as np
 from settings import (
     FOV_ANGLE, NUM_SECTORS, SENSOR_RANGE,
     RED, GREEN, BLACK, YELLOW, BLUE,
 )
+
+# Reused across frames to avoid allocating large SRCALPHA surfaces every draw.
+_FOV_SURFACE_SIZE = int(SENSOR_RANGE * 2.2)
+_fov_surface = None
+
+
+def _get_fov_surface():
+    global _fov_surface
+    if _fov_surface is None:
+        _fov_surface = pygame.Surface((_FOV_SURFACE_SIZE, _FOV_SURFACE_SIZE), pygame.SRCALPHA)
+    return _fov_surface
 
 
 def draw_food(screen, food):
@@ -15,13 +26,13 @@ def _draw_fov(screen, creature):
     left_angle = creature.angle - half_fov
     right_angle = creature.angle + half_fov
 
-    surface_size = int(SENSOR_RANGE * 2.2)
+    surface_size = _FOV_SURFACE_SIZE
     surface_half = surface_size // 2
 
-    cos_left = np.cos(left_angle)
-    sin_left = np.sin(left_angle)
-    cos_right = np.cos(right_angle)
-    sin_right = np.sin(right_angle)
+    cos_left = math.cos(left_angle)
+    sin_left = math.sin(left_angle)
+    cos_right = math.cos(right_angle)
+    sin_right = math.sin(right_angle)
 
     num_arc_points = 12
     fov_points = [(surface_half, surface_half)]
@@ -29,13 +40,12 @@ def _draw_fov(screen, creature):
 
     for i in range(num_arc_points + 1):
         angle = left_angle + angle_step * i
-        cos_a = np.cos(angle)
-        sin_a = np.sin(angle)
-        arc_x = surface_half + cos_a * SENSOR_RANGE
-        arc_y = surface_half + sin_a * SENSOR_RANGE
+        arc_x = surface_half + math.cos(angle) * SENSOR_RANGE
+        arc_y = surface_half + math.sin(angle) * SENSOR_RANGE
         fov_points.append((int(arc_x), int(arc_y)))
 
-    fov_surface = pygame.Surface((surface_size, surface_size), pygame.SRCALPHA)
+    fov_surface = _get_fov_surface()
+    fov_surface.fill((0, 0, 0, 0))
     pygame.draw.polygon(fov_surface, (255, 255, 0, 10), fov_points)
 
     blit_x = int(creature.x - surface_half)
@@ -47,10 +57,8 @@ def _draw_fov(screen, creature):
 
     for i in range(NUM_SECTORS + 1):
         sector_line_angle = creature.angle - half_fov + (sector_angle * i)
-        cos_sector = np.cos(sector_line_angle)
-        sin_sector = np.sin(sector_line_angle)
-        line_end_x = cx + cos_sector * SENSOR_RANGE
-        line_end_y = cy + sin_sector * SENSOR_RANGE
+        line_end_x = cx + math.cos(sector_line_angle) * SENSOR_RANGE
+        line_end_y = cy + math.sin(sector_line_angle) * SENSOR_RANGE
         pygame.draw.line(
             screen, (200, 200, 0),
             (cx, cy), (int(line_end_x), int(line_end_y)), 1,
@@ -70,8 +78,8 @@ def _draw_body(screen, creature):
     color = (50, green, 50)
     pygame.draw.circle(screen, color, (int(creature.x), int(creature.y)), creature.radius)
 
-    end_x = creature.x + np.cos(creature.angle) * creature.radius * 1.5
-    end_y = creature.y + np.sin(creature.angle) * creature.radius * 1.5
+    end_x = creature.x + math.cos(creature.angle) * creature.radius * 1.5
+    end_y = creature.y + math.sin(creature.angle) * creature.radius * 1.5
     pygame.draw.line(screen, BLACK, (creature.x, creature.y), (end_x, end_y), 2)
 
 

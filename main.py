@@ -100,14 +100,16 @@ def advance_generation(creatures, foods, stats, generation, gen_timer):
 
 def render_frame(screen, foods, creatures, selected_creature, show_fov,
                  scrollable_panel, font, small_font, clock, generation,
-                 gen_timer, stats, graph_surface, paused, seed):
-    screen.fill(WHITE)
+                 gen_timer, stats, graph_surface, paused, seed, frame_id):
+    # Only clear the sim area; the UI panel redraws its own background.
     pygame.draw.rect(screen, WHITE, (0, 0, SIM_WIDTH, WINDOW_HEIGHT))
 
     for food in foods:
         draw_food(screen, food)
     for creature in creatures:
-        draw_creature(screen, creature, show_fov)
+        # FOV fill is expensive on web — draw it only for the selected creature.
+        draw_fov = show_fov and creature is selected_creature
+        draw_creature(screen, creature, draw_fov)
 
     if selected_creature and selected_creature.alive:
         pygame.draw.circle(
@@ -119,7 +121,7 @@ def render_frame(screen, foods, creatures, selected_creature, show_fov,
     draw_ui_panel(
         screen, scrollable_panel, font, small_font, clock, generation, creatures,
         gen_timer, stats, graph_surface, selected_creature, foods,
-        seed=seed,
+        seed=seed, frame_id=frame_id,
     )
     draw_status_indicators(screen, font, paused, show_fov)
     pygame.display.flip()
@@ -158,6 +160,7 @@ async def main():
         'show_fov': False,
     }
 
+    frame_id = 0
     running = True
     while running:
         clock.tick(60)
@@ -185,9 +188,10 @@ async def main():
         render_frame(
             screen, foods, creatures, state['selected_creature'], state['show_fov'],
             scrollable_panel, font, small_font, clock, generation,
-            gen_timer, stats, graph_surface, state['paused'], seed,
+            gen_timer, stats, graph_surface, state['paused'], seed, frame_id,
         )
 
+        frame_id += 1
         await yield_frame()
 
     if not IS_WEB:

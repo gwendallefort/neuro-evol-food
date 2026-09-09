@@ -49,7 +49,7 @@ def _draw_mini_chart(surface, rect, xs, series, colors, title, font, ylim=None):
     title_surf = font.render(title, True, BLACK)
     surface.blit(title_surf, (x + 6, y + 4))
 
-    tick_font = pygame.font.Font(None, 14)
+    tick_font = font
     pad_l, pad_r, pad_t, pad_b = 36, 8, 24, 22
     plot = pygame.Rect(x + pad_l, y + pad_t, w - pad_l - pad_r, h - pad_t - pad_b)
     pygame.draw.rect(surface, WHITE, plot)

@@ -13,14 +13,14 @@ class NeuralNetwork:
             self.biases.append(b)
 
     def forward(self, inputs):
-        x = np.array(inputs)
+        x = np.asarray(inputs, dtype=float)
         for w, b in zip(self.weights, self.biases):
             x = np.tanh(np.dot(x, w) + b)
         return x
 
     def forward_activations(self, inputs):
         """Return activations for every layer including the input layer."""
-        x = np.array(inputs, dtype=float)
+        x = np.asarray(inputs, dtype=float)
         activations = [x.copy()]
         for w, b in zip(self.weights, self.biases):
             x = np.tanh(np.dot(x, w) + b)

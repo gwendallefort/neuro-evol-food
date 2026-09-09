@@ -1,4 +1,4 @@
-import numpy as np
+import math
 
 # Window Dimensions
 WINDOW_WIDTH = 1200
@@ -22,7 +22,7 @@ SIMULATION_SEED = None
 REPRODUCTION_RATE = 1.5
 
 # Brain Settings
-FOV_ANGLE = np.pi * 0.75 # Field of view in radians (180 degrees)
+FOV_ANGLE = math.pi * 0.75  # Field of view in radians
 NUM_SECTORS = 8  # Number of sectors to divide the field of view
 SENSOR_RANGE = 200  # Maximum sensing range
 BRAIN_LAYERS = [

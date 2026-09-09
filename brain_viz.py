@@ -1,5 +1,15 @@
 import pygame
 
+_label_font = None
+_label_surfaces = None
+
+
+def _get_label_font():
+    global _label_font
+    if _label_font is None:
+        _label_font = pygame.font.Font(None, 18)
+    return _label_font
+
 
 def _layout_neurons(layer_sizes, x, y, width, height):
     """Calculate screen positions for each neuron in each layer."""
@@ -55,11 +65,15 @@ def _draw_neurons(surface, neuron_positions, activations):
 
 
 def _draw_labels(surface, neuron_positions, y):
-    font = pygame.font.Font(None, 18)
-    layer_names = ['Input', 'Hidden', 'Output']
+    global _label_surfaces
+    font = _get_label_font()
+    layer_names = ('Input', 'Hidden', 'Output')
+    if _label_surfaces is None:
+        _label_surfaces = [font.render(name, True, (0, 0, 0)) for name in layer_names]
+
     for layer_idx, positions in enumerate(neuron_positions):
-        if layer_idx < len(layer_names):
-            label = font.render(layer_names[layer_idx], True, (0, 0, 0))
+        if layer_idx < len(_label_surfaces):
+            label = _label_surfaces[layer_idx]
             label_x = positions[0][0] - label.get_width() // 2
             label_y = y - 20
             surface.blit(label, (label_x, label_y))
