@@ -18,7 +18,7 @@ from ui import ScrollablePanel, draw_ui_panel, draw_status_indicators
 from seed import parse_seed_arg, ui_rng
 from spawn import random_spawn_position
 from render_entities import draw_creature, draw_food
-from web import configure_web_display, quit_pygame, yield_frame
+from web import configure_web_display, post_seed_to_parent, quit_pygame, yield_frame
 
 
 def simulation_step(creatures, foods, dt):
@@ -130,6 +130,7 @@ def render_frame(screen, foods, creatures, selected_creature, show_fov,
 async def main():
     seed = parse_seed_arg()
     print(f"Simulation seed: {seed}")
+    post_seed_to_parent(seed)
 
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))

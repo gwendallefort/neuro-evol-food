@@ -33,6 +33,32 @@ def seed_from_url() -> int | None:
         return None
 
 
+def post_seed_to_parent(seed: int) -> None:
+    """Notify the embedding page of the active simulation seed via postMessage."""
+    if not IS_WEB:
+        return
+
+    import json
+    import platform
+
+    payload = {"type": "ne-food-seed", "seed": int(seed)}
+    try:
+        # Build a plain JS object.
+        message = platform.window.JSON.parse(json.dumps(payload))
+        targets = []
+        parent = getattr(platform.window, "parent", None)
+        top = getattr(platform.window, "top", None)
+        if parent is not None:
+            targets.append(parent)
+        if top is not None and top is not parent:
+            targets.append(top)
+        for target in targets:
+            target.postMessage(message, "*")
+        print(f"post_seed_to_parent: sent {payload}")
+    except Exception as exc:
+        print(f"post_seed_to_parent failed: {exc!r}")
+
+
 def configure_web_display() -> None:
     """Restore full-width canvas sizing and dismiss the loading shell."""
     if not IS_WEB:
