@@ -7,8 +7,30 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from urllib.parse import parse_qs
 
 IS_WEB = sys.platform in ("emscripten", "wasi")
+
+
+def seed_from_url() -> int | None:
+    """Read ``?seed=`` from the browser URL; return None on desktop or if unset/invalid."""
+    if not IS_WEB:
+        return None
+
+    import platform
+
+    try:
+        search = str(getattr(platform.window.location, "search", "") or "")
+    except Exception:
+        return None
+
+    values = parse_qs(search.lstrip("?")).get("seed")
+    if not values:
+        return None
+    try:
+        return int(values[0])
+    except (TypeError, ValueError):
+        return None
 
 
 def configure_web_display() -> None:

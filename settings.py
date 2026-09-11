@@ -15,7 +15,7 @@ FOOD_SPAWN_INTERVAL = 0.1  # Time in seconds between food spawns
 GENERATION_TIME = 12
 
 # Set to an int for a reproducible run, or None to pick a random seed each launch.
-# You can also pass --seed on the command line (overrides this value).
+# Overrides: --seed on the command line, or ?seed= on the web URL.
 SIMULATION_SEED = None
 
 # Generation Settings

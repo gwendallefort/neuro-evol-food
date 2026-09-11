@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 from settings import SIMULATION_SEED
+from web import seed_from_url
 
 # UI-only RNG so pressing N / interacting does not desync the simulation seed.
 ui_rng = random.Random()
@@ -32,10 +33,10 @@ def _fresh_seed():
     return int(time.time_ns() % (2**31))
 
 
-def resolve_seed(cli_seed=None):
-    """Pick the seed for this run: CLI > settings > random."""
-    if cli_seed is not None:
-        return int(cli_seed)
+def resolve_seed(explicit_seed=None):
+    """Pick the seed for this run: CLI/URL > settings > random."""
+    if explicit_seed is not None:
+        return int(explicit_seed)
     if SIMULATION_SEED is not None:
         return int(SIMULATION_SEED)
     return _fresh_seed()
@@ -48,16 +49,21 @@ def seed_simulation(seed):
 
 
 def parse_seed_arg(argv=None):
-    """Parse --seed from the command line and return the resolved seed."""
+    """
+    Resolve and apply the simulation seed.
+
+    Priority: ``--seed`` (CLI) > ``?seed=`` (web URL) > ``SIMULATION_SEED`` > random.
+    """
     parser = argparse.ArgumentParser(description="Neuro-evolution food simulation")
     parser.add_argument(
         "--seed",
         type=int,
         default=None,
-        help="RNG seed for a reproducible simulation (overrides SIMULATION_SEED)",
+        help="RNG seed for a reproducible simulation (overrides SIMULATION_SEED / URL)",
     )
     args, _ = parser.parse_known_args(argv)
-    seed = resolve_seed(args.seed)
+    explicit = args.seed if args.seed is not None else seed_from_url()
+    seed = resolve_seed(explicit)
     seed_simulation(seed)
     # Separate entropy so UI picks (e.g. N) stay non-deterministic on web too.
     ui_rng.seed(_fresh_seed())
