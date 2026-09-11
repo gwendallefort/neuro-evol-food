@@ -2,7 +2,6 @@ import pygame
 import numpy as np
 from genetics import calculate_fitness
 from settings import *
-from web_platform import IS_WEB
 
 try:
     import matplotlib
@@ -207,7 +206,7 @@ class Statistics:
         self.purple_color_rgb = PURPLE
         self.orange_color_rgb = ORANGE
 
-    def record_generation(self, gen_number, creatures, gen_time):
+    def record_generation(self, gen_number, creatures):
         """Record stats at the end of each generation"""
         if not creatures:
             return
@@ -227,11 +226,11 @@ class Statistics:
         self.average_speed.append(float(np.mean(alive_speeds)) if alive_speeds else 0.0)
 
     def render_graphs(self, width, height):
-        """Render graphs to a pygame surface (matplotlib on desktop, pygame on web)."""
+        """Render graphs to a pygame surface (matplotlib when available, else pygame)."""
         if len(self.generations) < 1:
             return None
 
-        if IS_WEB or not HAS_MATPLOTLIB:
+        if not HAS_MATPLOTLIB:
             return _render_graphs_pygame(self, width, height)
         return _render_graphs_matplotlib(self, width, height)
 

@@ -1,0 +1,472 @@
+<html lang="en-us"><script src="{{cookiecutter.cdn}}pythons.js" type=module id="site" data-python="python{{cookiecutter.PYBUILD}}" data-LINES=42 data-COLUMNS=132 data-os="vtx,snd,gui" async defer>#<!--
+
+print("""
+Loading {{cookiecutter.title}} from {{cookiecutter.archive}}.apk
+    Pygbag Version : {{cookiecutter.version}}
+    Template Version : 0.9.3-custom
+    Python  : {{cookiecutter.PYBUILD}}
+    CDN URL : {{cookiecutter.cdn}}
+    Screen  : {{cookiecutter.width}}x{{cookiecutter.height}}
+    Title   : {{cookiecutter.title}}
+    Folder  : {{cookiecutter.directory}}
+    Authors : {{cookiecutter.authors}}
+    SPDX-License-Identifier: {{cookiecutter.spdx}}
+
+""")
+
+import asyncio
+import platform
+from pathlib import Path
+
+PUBLIC_CDN = "https://pygame-web.github.io/cdn/"
+
+
+# do not rename
+async def custom_site():
+    import embed
+    platform.document.body.style.background = "#d8e0da"
+
+    # On any localhost URL, pygbag defaults package installs to
+    # http://localhost:<port>/cdn/ (its own test-server proxy). When the build
+    # is embedded in another local site (e.g. Laravel on :8000), that proxy
+    # does not exist and numpy/pygame wheels 404. Prefer the public CDN.
+    PyConfig.pkg_indexes = [PUBLIC_CDN]
+
+    # Keep #transfer visible until main.py calls configure_web_display().
+    platform.window.canvas.style.visibility = "visible"
+
+    def set_status(msg):
+        # Do NOT use platform.window.status — that is the browser's legacy
+        # window.status string, not #status. Writing .innerText on it deadlocks
+        # the pygbag/wasm runtime (loader freezes after the package index fetch).
+        try:
+            el = platform.document.getElementById("status")
+            if el is not None:
+                el.innerHTML = msg
+        except Exception:
+            pass
+
+    def dismiss_loading_shell():
+        platform.window.transfer.hidden = True
+        platform.window.transfer.style.display = "none"
+        platform.window.config.gui_divider = 1
+        platform.window.window_resize()
+
+    bundle = "{{cookiecutter.archive}}"
+    appdir = Path(f"/data/data/{bundle}")
+    appdir.mkdir()
+
+    set_status("Unpacking...")
+    if platform.window.location.host.find('.itch.zone') > 0:
+        import zipfile
+        async with platform.fopen("{{cookiecutter.archive}}.apk", "rb") as archive:
+            with zipfile.ZipFile(archive) as zip_ref:
+                zip_ref.extractall(appdir.as_posix())
+    else:
+        import tarfile
+        async with platform.fopen("{{cookiecutter.archive}}.tar.gz", "rb") as archive:
+            tar = tarfile.open(fileobj=archive, mode="r:gz")
+            tar.extractall(path=appdir.as_posix(), filter='tar')
+            tar.close()
+
+    set_status("Preparing runtime...")
+    platform.run_main(PyConfig, loaderhome=appdir / "assets", loadermain=None)
+
+    while embed.counter() < 0:
+        await asyncio.sleep(.1)
+
+    main = appdir / "assets" / "main.py"
+
+    if not platform.window.MM.UME:
+        __import__(__name__).__file__ = main
+        msg = "Click or tap to start"
+        set_status(msg)
+        print("\n" * 4, f"    * Waiting for media user engagement. {msg} *", "\n" * 4)
+        while not platform.window.MM.UME:
+            await asyncio.sleep(.1)
+
+    set_status("Starting...")
+    await TopLevel_async_handler.start_toplevel(platform.shell, console=window.python.config.debug)
+
+    __import__(__name__).__file__ = main
+
+    # Re-assert after toplevel start in case startup reset indexes.
+    # Also rewrite any already-loaded repo CDN bases (localhost /cdn proxy).
+    PyConfig.pkg_indexes = [PUBLIC_CDN]
+    try:
+        import aio.pep0723
+        for repo in getattr(aio.pep0723.Config, "pkg_repolist", []) or []:
+            if isinstance(repo, dict) and "-CDN-" in repo:
+                repo["-CDN-"] = PUBLIC_CDN
+    except Exception as e:
+        print("custom.tmpl: could not rewrite pkg CDN:", e)
+
+    def ui_callback(pkg):
+        set_status(f"Installing {pkg}")
+
+    set_status("Loading simulation...")
+    await shell.source(main, callback=ui_callback)
+
+    # Reached only if main.py returns (async game loops usually do not).
+    # Loading UI dismissal is normally handled by configure_web_display().
+    dismiss_loading_shell()
+    print("custom.tmpl: done")
+    shell.interactive()
+
+asyncio.run(custom_site())
+
+
+
+
+# BEGIN BLOCK
+#
+# now this is the html part you can (and should) customize
+# It is not mandatory : pygame-script when it reads the first line (also called
+# shebang ) of above code create absolute minimal widget set
+# required for running with default rules
+#
+# do not alter that comment block it is separating python code from html code
+# =============================================================================
+# --></script><head><!--
+//=============================================================================
+//
+//
+//
+//
+//
+//
+//
+
+    {%- if cookiecutter.comment != "" -%}
+{{cookiecutter.comment}}
+    {% endif %}
+
+--><script type="application/javascript">
+// END BLOCK
+
+// this dict is available under PyConfig.config from __main__
+config = {
+    xtermjs : "{{cookiecutter.xtermjs}}" ,
+    _sdl2 : "canvas",
+    user_canvas : 0,
+    user_canvas_managed : 0,
+    gui_divider : 1,
+    ume_block : {{cookiecutter.ume_block}},
+    can_close : {{cookiecutter.can_close}},
+    archive : "{{cookiecutter.archive}}",
+    gui_debug : 2,
+    cdn : "{{cookiecutter.cdn}}",
+    autorun : {{cookiecutter.autorun}},
+    PYBUILD : "{{cookiecutter.PYBUILD}}",
+    fb_ar   :  1.77,
+    fb_width : "{{cookiecutter.width}}",
+    fb_height : "{{cookiecutter.height}}"
+}
+
+</script>
+
+    <title>{{cookiecutter.title}}</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="theme-color" content="#d8e0da">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
+
+    <style>
+        :root {
+            --bg: #d8e0da;
+            --bg-deep: #c2cdc6;
+            --ink: #1a2420;
+            --muted: #5a6a61;
+            --accent: #2f6b4f;
+            --line: rgba(26, 36, 32, 0.12);
+            --font: "Sora", "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font);
+            color: var(--ink);
+            background:
+                radial-gradient(120% 80% at 12% 8%, #eef3ef 0%, transparent 55%),
+                radial-gradient(90% 70% at 88% 92%, #c9d5cd 0%, transparent 50%),
+                linear-gradient(160deg, var(--bg), var(--bg-deep));
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #transfer {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 2rem;
+            background: inherit;
+            animation: fade-in 0.45s ease-out both;
+        }
+
+        /* Author display:flex must not override the HTML [hidden] attribute. */
+        #transfer[hidden] {
+            display: none !important;
+        }
+
+        #transfer::before {
+            content: "";
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 2.5px solid var(--line);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        #status {
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            font-family: var(--font);
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        #progress {
+            appearance: none;
+            -webkit-appearance: none;
+            width: min(18rem, 70vw);
+            height: 0.2rem;
+            border: none;
+            background: var(--line);
+            overflow: hidden;
+        }
+
+        #progress::-webkit-progress-bar {
+            background: var(--line);
+        }
+
+        #progress::-webkit-progress-value {
+            background: var(--accent);
+            transition: width 0.2s ease;
+        }
+
+        #progress::-moz-progress-bar {
+            background: var(--accent);
+        }
+
+        div.emscripten { text-align: center; }
+        div.emscripten_border { border: 1px solid var(--line); }
+
+        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+        canvas.emscripten {
+            border: 0 none;
+            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            padding: 0;
+            margin: 0 auto;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            animation: fade-in 0.55s ease-out both;
+        }
+
+        .bottomright {
+            position: absolute;
+            top: 40%;
+            right: 0;
+        }
+
+        .trinfo {
+            position: relative;
+            right: 0;
+            border: 1px solid var(--line);
+        }
+
+        .framed {
+            position: relative;
+            top: 150px;
+            right: 10px;
+            border: 1px solid var(--line);
+        }
+
+        #pyconsole {
+            font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #transfer,
+            canvas.emscripten {
+                animation: none;
+            }
+
+            #transfer::before {
+                animation: none;
+                border-color: var(--accent);
+            }
+        }
+    </style>
+
+    <!-- Required by pygbag 0.9; CDN 0.9.3 no longer hosts this file. -->
+    <script src="https://pygame-web.github.io/archives/0.9/browserfs.min.js"></script>
+
+</head>
+
+<body>
+
+    <div id="transfer" align=center>
+        <div class="emscripten" id="status">Downloading...</div>
+        <div class="emscripten">
+            <progress value="0" max="100" id="progress"></progress>
+        </div>
+    </div>
+
+    <canvas class="emscripten" id="canvas"
+width="1px"
+height="1px"
+    oncontextmenu="event.preventDefault()" tabindex=1>
+    </canvas>
+
+    <canvas class="emscripten" id="canvas3d"
+width="{{cookiecutter.width}}px"
+height="{{cookiecutter.height}}px"
+    oncontextmenu="event.preventDefault()" tabindex=1 hidden>
+    </canvas>
+
+    <div id=html></div>
+
+    <div id=crt  class=bottomright >
+
+        <div id="system" hidden>
+            <div class="button-container">
+                <button id="aiostop" disabled>AIO ⏏︎</button>
+                <button id="aiopaused_true" disabled>AIO ■</button>
+                <button id="aiopaused_false" disabled>AIO ▶</button>
+                <button id="pygame_mixer_music_pause" disabled>Music ■</button>
+            </div>
+
+            <div class="button-container">
+                <div id=load_min>min</div>
+                <div id=load_avg>avg</div>
+                <div id=load_max>max</div>
+              <button id="load_rst" disabled>RESET</button>
+            </div>
+
+            <div id="level">(battery level unknown)</div>
+            <div id="stateBattery">(charging state unknown)</div>
+
+        </div>
+
+        <div id=box class="emscripten_border" hidden=true>
+
+            <div id="info" class="trinfo"></div>
+
+            <iframe id="iframe" class="framed" name="iframe"
+width="470px" height="90%"
+allowtransparency="true"
+style="z-index: 10;"
+style="background: #FFFFFF;"
+frameborder="1"
+                allowfullscreen="true"
+                webkitallowfullscreen="true"
+                msallowfullscreen="true"
+                mozallowfullscreen="true"
+                sandbox="allow-same-origin allow-top-navigation allow-scripts allow-pointer-lock"
+                allow="autoplay; fullscreen *; geolocation; microphone; camera; midi; monetization; xr-spatial-tracking; gamepad; gyroscope; accelerometer; xr; cross-origin-isolated"
+                src="{{cookiecutter.cdn}}empty.html"
+                scrolling="yes">
+            </iframe>
+        </div>
+
+    </div>
+
+    <div id="dlg" hidden>
+        <input type="file" id="dlg_multifile" multiple accept="image/*">
+        <label for="dlg_multifile">Select files</label>
+    </div>
+
+    <div id="pyconsole">
+        <div id="terminal" tabIndex=1 align="left"></div>
+    </div>
+
+    <script type="application/javascript">
+
+    async function custom_onload(debug_hidden) {
+        // Called before Python loads. Keep #transfer visible until display is ready.
+        console.log(__FILE__, "custom_onload")
+        pyconsole.hidden = debug_hidden
+        system.hidden = debug_hidden
+        info.hidden = debug_hidden
+        box.hidden = debug_hidden
+    }
+
+    function custom_prerun(){
+        console.log(__FILE__, "custom_prerun")
+    }
+
+    function custom_postrun(){
+        console.log(__FILE__, "custom_postrun")
+    }
+
+    function debug() {
+        python.config.debug = true
+        custom_onload(false)
+        Module.PyRun_SimpleString("shell.uptime()")
+        window_resize()
+    }
+
+    function info_inline(data){
+        document.getElementById("info").innerHTML = data
+    }
+
+    function info_online(url) {
+        fetch(url)
+            .then((response) => response.text())
+            .then((html) => { info_inline(html); })
+            .catch((error) => { console.warn(error); });
+    }
+
+    function frame_online(url) {
+        window.frames["iframe"].location = url;
+    }
+
+    </script>
+
+</body>
+</html>

@@ -350,8 +350,8 @@ def draw_ui_panel(screen, scrollable_panel, font, small_font, clock, generation,
     scrollable_panel.end_draw(screen, content_surface)
 
 
-def draw_status_indicators(screen, font, paused, show_fov=True):
-    """Draw status indicators on the simulation area (paused, FOV)"""
+def draw_status_indicators(screen, font, paused):
+    """Draw the paused indicator on the simulation area."""
     global _pause_surface
     if paused:
         if _pause_surface is None:

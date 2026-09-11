@@ -18,7 +18,7 @@ from ui import ScrollablePanel, draw_ui_panel, draw_status_indicators
 from seed import parse_seed_arg, ui_rng
 from spawn import random_spawn_position
 from render_entities import draw_creature, draw_food
-from web_platform import IS_WEB, configure_web_display, yield_frame
+from web import configure_web_display, quit_pygame, yield_frame
 
 
 def simulation_step(creatures, foods, dt):
@@ -82,7 +82,7 @@ def advance_generation(creatures, foods, stats, generation, gen_timer):
     ended is True if the simulation should stop.
     """
     if creatures:
-        stats.record_generation(generation, creatures, gen_timer)
+        stats.record_generation(generation, creatures)
 
     creatures = create_new_generation(creatures)
     if creatures is None:
@@ -123,7 +123,7 @@ def render_frame(screen, foods, creatures, selected_creature, show_fov,
         gen_timer, stats, graph_surface, selected_creature, foods,
         seed=seed, frame_id=frame_id,
     )
-    draw_status_indicators(screen, font, paused, show_fov)
+    draw_status_indicators(screen, font, paused)
     pygame.display.flip()
 
 
@@ -135,8 +135,7 @@ async def main():
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption(f"Evolution Simulation (seed={seed})")
 
-    # Pygbag's default template leaves gui_divider=2 (half-width canvas) until
-    # main() returns. Our loop never returns, so restore full-width sizing here.
+    # Pygbag leaves gui_divider half-width until main returns; our loop never does.
     configure_web_display()
 
     clock = pygame.time.Clock()
@@ -194,8 +193,7 @@ async def main():
         frame_id += 1
         await yield_frame()
 
-    if not IS_WEB:
-        pygame.quit()
+    quit_pygame()
 
 
 if __name__ == "__main__":
